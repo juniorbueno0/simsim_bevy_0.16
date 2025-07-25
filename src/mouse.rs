@@ -20,7 +20,7 @@ impl Plugin for MyMousePlugin {
         // app.insert_resource(MouseWindowPosition(Vec2::new(0.,0.)));
 
         app.add_systems(Startup, setup);
-        app.add_systems(Update,cursor_to_world_position);
+        app.add_systems(Update,(cursor_to_world_position, mouse_pixel_position));
     }
 }
 
@@ -65,8 +65,15 @@ fn cursor_to_world_position(
         let x_value: i32 = mycoords.0.x as i32;
         let y_value: i32 = mycoords.0.y as i32;
         // to f32 
-        // needs fix
         mycoords.0 = Vec2::new(x_value as f32, y_value as f32);
-        println!("{:?}", mycoords.0);
     }
+}
+
+fn mouse_pixel_position(
+    pixel: Res<MyWorldCoords>,
+    mut pixel_transform: Query<&mut Transform, With<MousePixelPosition>>
+) {
+    if let Ok(mut tf) = pixel_transform.single_mut() {
+        tf.translation = Vec3::new(pixel.0.x,pixel.0.y, 4.);
+    };
 }

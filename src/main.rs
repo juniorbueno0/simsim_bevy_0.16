@@ -53,3 +53,6 @@ fn main() {
 
 // house
 // gives the town more npc spaces
+
+
+// player_inventory -> ui_backpack -> item_slected -> grid 
