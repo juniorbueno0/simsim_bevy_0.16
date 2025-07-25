@@ -32,14 +32,14 @@ fn draw_base_ui(mut commands: Commands) {
             ));
         });
 
-        children.spawn((
+        children.spawn(
             Node {
                 width: Val::Percent(100.),
                 height: Val::Percent(95.),
                 display: Display::Flex,
                 flex_direction: FlexDirection::Row,
                 ..default()
-            }, BackgroundColor(Color::srgb(0.4,0.4,0.6))
-        ));
+            }
+        );
     });
 }

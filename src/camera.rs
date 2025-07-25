@@ -11,7 +11,7 @@ const CAMERA: CameraSettings = CameraSettings {
 };
 
 #[derive(Debug, Component)]
-struct MainCamera;
+pub struct MainCamera;
 
 #[derive(Resource)]
 pub struct MainCameraActualPosition(pub Vec2);

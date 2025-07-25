@@ -1,7 +1,5 @@
 use bevy::{image::ImageSamplerDescriptor, prelude::*, render::{settings::{Backends, RenderCreation, WgpuSettings}, RenderPlugin}, window::WindowResolution};
 
-use crate::mouse::MyMousePlugin;
-
 mod grid;
 mod mouse;
 mod camera;
