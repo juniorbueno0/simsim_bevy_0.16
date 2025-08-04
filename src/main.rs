@@ -57,6 +57,6 @@ fn main() {
 // player_inventory -> ui_backpack -> item_slected -> grid 
 
 // item amount manage
-// item get decreased when spawned
-// player inventory gets  decreased at player.rs
-// ui buttons are also decreased at gameui.rs
+// player inventory / ui_slot get decreased when spawned
+// player inventory gets removed at player.rs
+// ui buttons are reseted at gameui.rs

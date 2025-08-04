@@ -38,6 +38,7 @@ impl Plugin for MyGameUiPlugin {
  
         app.add_systems(Startup, ui_setup);      
         app.add_systems(Update, (ui_slot_interactions, ui_load_items, ui_reset_slot, reset_player_item_selected));
+        app.add_systems(Update, ui_slot_text);
     }
 }
 
@@ -182,6 +183,14 @@ fn ui_reset_slot(
         ui_button.item = Item::None;
         ui_button.assigned = false;
     };
+}
+
+fn ui_slot_text(
+    mut ui_slots: Query<(&UiSlot, &mut Text), (With<UiItemSlotButton>, Changed<UiSlot>)>,
+) {
+    for (slot, mut text) in &mut ui_slots {
+        text.0 = slot.amount.to_string();
+    }
 }
 
 fn reset_player_item_selected(
