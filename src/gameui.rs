@@ -6,18 +6,19 @@ use crate::player::{Item, PlayerInventory, INVENTORYSIZE};
 struct UiButton;
 
 #[derive(Component)]
-struct UiItemSlotButton;
+pub struct UiItemSlotButton;
 
-#[derive(Resource)]
-struct ItemSelected {
-    selected: Item
+#[derive(Resource, Debug)]
+pub struct ItemSelected {
+    pub selected: Item,
+    pub entity: Entity
 }
 
 #[derive(Debug, Component)]
-struct UiSlot {
-    item: Item,
-    amount: i32,
-    assigned: bool
+pub struct UiSlot {
+    pub item: Item,
+    pub amount: i32,
+    pub assigned: bool
 }
 
 #[derive(Bundle)]
@@ -33,14 +34,14 @@ pub struct MyGameUiPlugin;
 
 impl Plugin for MyGameUiPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(ItemSelected { selected: Item::None });
+        app.insert_resource(ItemSelected { selected: Item::None, entity: Entity::from_raw(0) });
  
-        app.add_systems(Startup, draw_base_ui);      
-        app.add_systems(Update, (ui_btn_interactions, load_ui_items));
+        app.add_systems(Startup, ui_setup);      
+        app.add_systems(Update, (ui_slot_interactions, ui_load_items, ui_reset_slot, reset_player_item_selected));
     }
 }
 
-fn draw_base_ui(mut commands: Commands) {
+fn ui_setup(mut commands: Commands) {
     let inventory_row_gap = 10.0;
     let rgb_topbar = (0.3,0.3,0.3);
     let rgb_inventory_bg = (0.5,0.6,0.5);
@@ -143,13 +144,13 @@ fn build_custom_button(item: Item, amount: i32,rgb: (f32,f32,f32)) -> impl Bundl
     )
 }
 
-fn ui_btn_interactions(
+fn ui_slot_interactions(
     mut selection: ResMut<ItemSelected>,
     button_interactions: Query<(&Interaction,&UiSlot,Entity),(With<UiItemSlotButton>, Changed<Interaction>)>
 ) {
     for (int, uis, ent) in &button_interactions {
         if *int == Interaction::Pressed {
-            selection.selected = uis.item;
+            (selection.selected, selection.entity) = (uis.item, ent);
 
             println!("{:?}, {:?}", uis, ent);
         }
@@ -157,17 +158,40 @@ fn ui_btn_interactions(
 }
 
 // load items that are in the inventory
-fn load_ui_items(
-    mut slots: Query<&mut UiSlot, With<UiItemSlotButton>>,
+fn ui_load_items(
+    mut slots: Query<(&mut UiSlot, Entity), With<UiItemSlotButton>>,
     mut player_inventory: ResMut<PlayerInventory>
 ) {
     let Some(item_not_assigned) = player_inventory.items.iter_mut().find(|i|!i.assigned) else { return; };
 
-    if let Some(mut slot) = slots.iter_mut().find(|s| s.item == Item::None) {
-        slot.assigned = true;
-        slot.item = item_not_assigned.item;
-        slot.amount = item_not_assigned.total_amount;
+    if let Some(mut slot) = slots.iter_mut().find(|s| s.0.item == Item::None) {
+        slot.0.assigned = true;
+        slot.0.item = item_not_assigned.item;
+        slot.0.amount = item_not_assigned.total_amount;
 
         item_not_assigned.assigned = true; // not assign it again!
+        item_not_assigned.ui_entity = slot.1; // assign the entity id of the ui slot to later decrease it
+    }
+}
+
+// when inventory stack gets to 0 gets reset to Item::None 
+fn ui_reset_slot(
+    mut ui_slots: Query<&mut UiSlot, With<UiItemSlotButton>>,
+) {
+    if let Some(mut ui_button) = ui_slots.iter_mut().find(|uib|(uib.amount < 1) && (uib.item != Item::None)) {
+        ui_button.item = Item::None;
+        ui_button.assigned = false;
+    };
+}
+
+fn reset_player_item_selected(
+    mut player_selected_item: ResMut<ItemSelected>,
+    ui_slots: Query<(&UiSlot,Entity),With<UiItemSlotButton>>
+) {
+    let entity = ui_slots.iter().find(|s|(s.1 == player_selected_item.entity) && (s.0.item != Item::None));
+
+    match entity {
+        Option::Some(_) => {},
+        Option::None => { player_selected_item.selected = Item::None; player_selected_item.entity = Entity::from_raw(0) ; }
     }
 }

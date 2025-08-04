@@ -54,5 +54,9 @@ fn main() {
 // house
 // gives the town more npc spaces
 
-
 // player_inventory -> ui_backpack -> item_slected -> grid 
+
+// item amount manage
+// item get decreased when spawned
+// player inventory gets  decreased at player.rs
+// ui buttons are also decreased at gameui.rs
