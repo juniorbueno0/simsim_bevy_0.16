@@ -197,10 +197,10 @@ fn reset_player_item_selected(
     mut player_selected_item: ResMut<ItemSelected>,
     ui_slots: Query<(&UiSlot,Entity),With<UiItemSlotButton>>
 ) {
-    let entity = ui_slots.iter().find(|s|(s.1 == player_selected_item.entity) && (s.0.item != Item::None));
+    let entity = ui_slots.iter().find(|s|(s.1 == player_selected_item.entity));
 
     match entity {
         Option::Some(_) => {},
-        Option::None => { player_selected_item.selected = Item::None; player_selected_item.entity = Entity::from_raw(0) ; }
+        Option::None => { player_selected_item.selected = Item::None; player_selected_item.entity = Entity::from_raw(0); }
     }
 }

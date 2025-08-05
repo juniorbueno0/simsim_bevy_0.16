@@ -40,6 +40,7 @@ impl Plugin for MyPlayerPlugin {
 
 fn init(mut inventory: ResMut<PlayerInventory>) {
     inventory.items.push(ItemStack { item: Item::Coin, total_amount: 4, max_amount: 9, assigned: false, ui_entity: Entity::from_raw(0) });
+    inventory.items.push(ItemStack { item: Item::House, total_amount: 9, max_amount: 9, assigned: false, ui_entity: Entity::from_raw(0) });
 }
 
 fn drop_coin(
@@ -61,7 +62,7 @@ fn drop_coin(
         ));
 
         // decrease the coin at inventory and ui
-        if let Some(stack) = inv.items.iter_mut().find(|i| (i.item == Item::Coin) && (i.total_amount >= 1)) {
+        if let Some(stack) = inv.items.iter_mut().find(|i| (i.item == Item::House) && (i.total_amount >= 1)) {
             stack.total_amount -= 1;
             if let Some(mut ui_slot) = ui_buttons.iter_mut().find(|(slot,e)| (*e == stack.ui_entity) && slot.amount >= 1) {
                 ui_slot.0.amount -= 1;
