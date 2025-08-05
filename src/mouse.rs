@@ -8,6 +8,16 @@ pub struct MyWorldCoords(pub Vec2);
 // #[derive(Resource, Debug)]
 // struct MouseWindowPosition(Vec2);
 
+#[derive(Debug, Resource)]
+struct WindowProperties {
+    res: (f32, f32)
+}
+
+#[derive(Debug, Resource)]
+pub struct PointingAtUi {
+    pub can_place: bool
+}
+
 #[derive(Component)]
 #[require(Sprite, Transform)]
 struct MousePixelPosition;
@@ -16,11 +26,13 @@ pub struct MyMousePlugin;
 
 impl Plugin for MyMousePlugin {
     fn build(&self, app: &mut App) {
+        app.insert_resource(PointingAtUi { can_place: false });
         app.insert_resource(MyWorldCoords(Vec2 { x:0., y:0. }));
+        app.insert_resource(WindowProperties { res: (0.0, 0.0) });
         // app.insert_resource(MouseWindowPosition(Vec2::new(0.,0.)));
 
         app.add_systems(Startup, setup);
-        app.add_systems(Update,(cursor_to_world_position, mouse_pixel_position));
+        app.add_systems(Update,(cursor_to_world_position, mouse_pixel_position, can_build_here));
     }
 }
 
@@ -67,6 +79,36 @@ fn cursor_to_world_position(
         // to f32 
         mycoords.0 = Vec2::new(x_value as f32, y_value as f32);
     }
+}
+
+fn can_build_here(
+    mut pointing_at: ResMut<PointingAtUi>,
+    resize_event: Res<Events<WindowResized>>,
+    mut window_res: ResMut<WindowProperties>,
+    mut cursor_event: EventReader<CursorMoved>,
+) {
+    let mut reader = resize_event.get_cursor();
+    
+    for re in reader.read(&resize_event) {
+        window_res.res = (re.width, re.height);
+    }
+
+    if let Some(cursor) = cursor_event.read().next() {
+        // println!("cursor: {:?}",cursor);
+        // println!("resolution: {:?}", window_res.res);
+
+        let mouse = cursor.position;
+        let perc_y = window_res.res.1 / 100.;
+        let perc_x = window_res.res.0 / 100.;
+
+        if ((mouse.x < (perc_x * 4.)) || (mouse.y < (perc_y * 26.))) || (mouse.y > (perc_y * 78.) || (mouse.x > (perc_x * 11.))) {
+            pointing_at.can_place = true;
+            println!("can place object");
+            return;
+        }
+
+        pointing_at.can_place = false;
+    } else { pointing_at.can_place = false; };
 }
 
 fn mouse_pixel_position(
