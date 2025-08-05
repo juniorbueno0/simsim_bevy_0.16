@@ -4,12 +4,12 @@ use bevy::prelude::*;
 use crate::{gameui::{ItemSelected, UiItemSlotButton, UiSlot}, mouse::{MyWorldCoords, PointingAtUi}, player::{Item, PlayerInventory}};
 
 #[derive(Resource, PartialEq, Eq)]
-struct Buildings {
-   data: HashSet<((i32,i32), BuildingType)>
+pub struct Buildings {
+   pub data: HashSet<((i32,i32), BuildingType)>
 }
 
 #[derive(Debug, Component, PartialEq, Eq, Hash)]
-enum BuildingType {
+pub enum BuildingType {
     House
 }
 
@@ -25,12 +25,10 @@ pub struct MyBuildingPlugin;
 impl Plugin for MyBuildingPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(Buildings{data:HashSet::new()});
-        // app.add_systems(Startup, init);
+
         app.add_systems(Update, (log_buildings, spawn_houses)); 
     }
 }
-
-// fn init(mut cmm: Commands, mut buildings: ResMut<Buildings>) {}
 
 fn spawn_houses(
     mut cmm: Commands,

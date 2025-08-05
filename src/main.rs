@@ -5,6 +5,7 @@ mod mouse;
 mod camera;
 mod player;
 mod gameui;
+mod worker;
 mod buildings;
 
 // not yet implemented
@@ -37,12 +38,13 @@ fn main() {
     app.add_plugins(player::MyPlayerPlugin);
     app.add_plugins(camera::MyCameraPlugin);
     app.add_plugins(gameui::MyGameUiPlugin);
+    app.add_plugins(worker::MyWorkerPlugin);
     app.add_plugins(buildings::MyBuildingPlugin);
     
     app.run();
 }
 
-// npc
+// workers
 // search for a coin
 // if have a coin they go to a house
 // spawn and patrol specific biome
@@ -60,7 +62,3 @@ fn main() {
 // player inventory / ui_slot get decreased when spawned
 // player inventory gets removed at player.rs
 // ui buttons are reseted at gameui.rs
-
-// bugs
-// decrese inv ui
-// selecting diferent buttons

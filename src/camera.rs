@@ -33,6 +33,7 @@ fn setup_camera(mut commands: Commands) {
 fn move_camera(
     time: Res<Time>,
     input: Res<ButtonInput<KeyCode>>,
+    mut camera_position: ResMut<MainCameraActualPosition>,
     camera_query: Single<&mut Transform, With<MainCamera>>
 ) {
     let mut transform = camera_query.into_inner();
@@ -45,6 +46,7 @@ fn move_camera(
             KeyCode::KeyA => { transform.translation.x -= CAMERA.mov_speed * time.delta_secs(); },
             _ => {}
         }
+        camera_position.0 = Vec2::new(transform.translation.x, transform.translation.y);
     }
 }
 

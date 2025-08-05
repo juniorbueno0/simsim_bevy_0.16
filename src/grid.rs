@@ -30,7 +30,7 @@ impl Plugin for MyGridPlugin {
 }
 
 const CHUNK_SIZE: i32 = 8;
-const RENDER_DISTANCE: i32 = 2;
+const RENDER_DISTANCE: i32 = 4;
 
 fn generate_new_chunk_data(mut desired_chunks:ResMut<DesiredChunks>,cam_main:Res<MainCameraActualPosition>) {
     let camera_chunk_x = (cam_main.0.x / CHUNK_SIZE as f32).floor() as i32;
