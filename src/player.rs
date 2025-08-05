@@ -61,7 +61,7 @@ fn drop_coin(
     input: Res<ButtonInput<MouseButton>>,
     mut ui_buttons: Query<(&mut UiSlot, Entity), With<UiItemSlotButton>>
 ) {
-    if input.pressed(MouseButton::Left) && item.selected == Item::Coin && pointing_at.can_place &&
+    if input.just_pressed(MouseButton::Left) && item.selected == Item::Coin && pointing_at.can_place &&
         !coins.positions.contains(&(world_coords.0.x as i32, world_coords.0.y as i32)) {
 
         if let Some(stack) = inv.items.iter_mut().find(|i| (i.item == Item::Coin) && (i.total_amount >= 1) && (i.ui_entity == item.entity)) {
@@ -75,7 +75,8 @@ fn drop_coin(
                         custom_size: Some(Vec2 { x: 1., y: 1. }),
                         ..default()
                     },
-                    Transform::from_xyz(world_coords.0.x, world_coords.0.y, 2.)
+                    Transform::from_xyz(world_coords.0.x, world_coords.0.y, 2.),
+                    Item::Coin
                 ));
                 coins.positions.insert((world_coords.0.x as i32, world_coords.0.y as i32));
             }

@@ -40,7 +40,7 @@ fn spawn_houses(
     input: Res<ButtonInput<MouseButton>>,
     mut ui_buttons: Query<(&mut UiSlot, Entity), With<UiItemSlotButton>>
 ) {
-    if input.pressed(MouseButton::Left) && item.selected == Item::House && pointing_at.can_place && !buildings.data.contains(&((world_coords.0.x as i32, world_coords.0.y as i32), BuildingType::House)) {
+    if input.just_pressed(MouseButton::Left) && item.selected == Item::House && pointing_at.can_place && !buildings.data.contains(&((world_coords.0.x as i32, world_coords.0.y as i32), BuildingType::House)) {
         buildings.data.insert(((world_coords.0.x as i32, world_coords.0.y as i32), BuildingType::House));
 
         if let Some(stack) = inv.items.iter_mut().find(|i| (i.item == Item::House) && (i.total_amount >= 1) && (i.ui_entity == item.entity)) {

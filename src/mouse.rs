@@ -107,7 +107,7 @@ fn can_build_here(
         }
 
         pointing_at.can_place = false;
-    } else { pointing_at.can_place = false; };
+    };
 }
 
 fn mouse_pixel_position(
