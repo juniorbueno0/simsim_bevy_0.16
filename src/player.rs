@@ -48,10 +48,7 @@ impl Plugin for MyPlayerPlugin {
 fn init(mut inventory: ResMut<PlayerInventory>) {
     inventory.items.push(ItemStack { item: Item::Coin, total_amount: 999, max_amount: MAXSTACKSIZE, assigned: false, ui_entity: Entity::from_raw(0) });
     inventory.items.push(ItemStack { item: Item::Coin, total_amount: 999, max_amount: MAXSTACKSIZE, assigned: false, ui_entity: Entity::from_raw(0) });
-    inventory.items.push(ItemStack { item: Item::Coin, total_amount: 999, max_amount: MAXSTACKSIZE, assigned: false, ui_entity: Entity::from_raw(0) });
-    inventory.items.push(ItemStack { item: Item::Coin, total_amount: 999, max_amount: MAXSTACKSIZE, assigned: false, ui_entity: Entity::from_raw(0) });
-
-    // inventory.items.push(ItemStack { item: Item::House, total_amount: 9, max_amount: 9, assigned: false, ui_entity: Entity::from_raw(0) });
+    inventory.items.push(ItemStack { item: Item::House, total_amount: 444, max_amount: MAXSTACKSIZE, assigned: false, ui_entity: Entity::from_raw(0) });
 }
 
 fn drop_coin(
@@ -65,9 +62,8 @@ fn drop_coin(
     mut ui_buttons: Query<(&mut UiSlot, Entity), With<UiItemSlotButton>>
 ) {
     if input.pressed(MouseButton::Left) && item.selected == Item::Coin && pointing_at.can_place &&
-        !object_at_position((world_coords.0.x as i32, world_coords.0.y as i32), &coins.positions) {
+        !coins.positions.contains(&(world_coords.0.x as i32, world_coords.0.y as i32)) {
 
-        // decrease the coin at inventory and ui
         if let Some(stack) = inv.items.iter_mut().find(|i| (i.item == Item::Coin) && (i.total_amount >= 1) && (i.ui_entity == item.entity)) {
             stack.total_amount -= 1;
             if let Some(mut ui_slot) = ui_buttons.iter_mut().find(|(slot,e)| (*e == stack.ui_entity) && slot.amount >= 1) {
@@ -84,13 +80,7 @@ fn drop_coin(
                 coins.positions.insert((world_coords.0.x as i32, world_coords.0.y as i32));
             }
         }
-
-        println!("spawned: {:?}", item.selected);
     }
-}
-
-fn object_at_position(target_pos: (i32,i32), objects_placed: &HashSet<(i32,i32)>) -> bool {
-    if objects_placed.contains(&target_pos) { return true; } else { return false; }
 }
 
 // if a player inventory gets to 0 it gets removed

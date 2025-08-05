@@ -103,7 +103,6 @@ fn can_build_here(
 
         if ((mouse.x < (perc_x * 4.)) || (mouse.y < (perc_y * 26.))) || (mouse.y > (perc_y * 78.) || (mouse.x > (perc_x * 11.))) {
             pointing_at.can_place = true;
-            println!("can place object");
             return;
         }
 
