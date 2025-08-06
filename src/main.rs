@@ -63,3 +63,4 @@ fn main() {
 // player inventory gets removed at player.rs
 // ui buttons are reseted at gameui.rs
 
+// all workers find the same coin not the closest one to their position
