@@ -13,7 +13,7 @@ struct WorkerData {
     coins: i32,
     house_pos: (i32,i32),
     target_coin_entity: Option<Entity>,
-    targer_coin_pos: Option<Vec3>,
+    target_coin_pos: Option<Vec3>,
     target_coin_dir: Option<Vec3>,
 }
 
@@ -44,7 +44,7 @@ fn setup(mut cmm: Commands) {
                 ..default()
             },
         tf: Transform::from_xyz(4.,4., 2.),
-        data: WorkerData { coins: 0, target_coin_entity: Option::None, targer_coin_pos: Option::None, target_coin_dir: Option::None, house_pos: (0,0) }
+        data: WorkerData { coins: 0, target_coin_entity: Option::None, target_coin_pos: Option::None, target_coin_dir: Option::None, house_pos: (0,0) }
     });
 
     cmm.spawn(WorkerBundle {
@@ -54,7 +54,7 @@ fn setup(mut cmm: Commands) {
                 ..default()
             },
         tf: Transform::from_xyz(12.,12., 2.),
-        data: WorkerData { coins: 0, target_coin_entity: Option::None, targer_coin_pos: Option::None, target_coin_dir: Option::None, house_pos: (0,0) }
+        data: WorkerData { coins: 0, target_coin_entity: Option::None, target_coin_pos: Option::None, target_coin_dir: Option::None, house_pos: (0,0) }
     });
 
     cmm.spawn(WorkerBundle {
@@ -64,7 +64,7 @@ fn setup(mut cmm: Commands) {
                 ..default()
             },
         tf: Transform::from_xyz(4.,12., 2.),
-        data: WorkerData { coins: 0, target_coin_entity: Option::None, targer_coin_pos: Option::None, target_coin_dir: Option::None, house_pos: (0,0) }
+        data: WorkerData { coins: 0, target_coin_entity: Option::None, target_coin_pos: Option::None, target_coin_dir: Option::None, house_pos: (0,0) }
     });
 
     cmm.spawn(WorkerBundle {
@@ -74,7 +74,7 @@ fn setup(mut cmm: Commands) {
                 ..default()
             },
         tf: Transform::from_xyz(12.,4., 2.),
-        data: WorkerData { coins: 0, target_coin_entity: Option::None, targer_coin_pos: Option::None, target_coin_dir: Option::None, house_pos: (0,0) }
+        data: WorkerData { coins: 0, target_coin_entity: Option::None, target_coin_pos: Option::None, target_coin_dir: Option::None, house_pos: (0,0) }
     });
 }
 
@@ -95,12 +95,30 @@ fn wwwz(mut workers: Query<(&mut Transform, &mut WorkerData, Entity), (With<Work
         if let Some(coin) = coins.iter().find(|c| (c.0.translation.x - tf.translation.x).norm() < distance && (c.0.translation.y - tf.translation.y).norm() < distance) {
             let dir = (tf.translation - coin.0.translation).normalize_or_zero();
             data.target_coin_dir = Some(dir);
+            data.target_coin_pos = Some(coin.0.translation);
+            data.target_coin_entity = Some(coin.1);
         }
     }
 }
 
-fn wwwy(time: Res<Time>, mut workers: Query<(&mut Transform, &mut WorkerData), (With<WorkerData>, Without<WorkerCollectable>)>) {
-    for (mut worker_tf,worker_data) in &mut workers {
-        if worker_data.target_coin_dir != Option::None { worker_tf.translation -= worker_data.target_coin_dir.unwrap() * 1.0 * time.delta_secs(); }
+fn wwwy(time: Res<Time>, mut cmm: Commands, mut workers: Query<(&mut Transform, &mut WorkerData), (With<WorkerData>, Without<WorkerCollectable>)>, coins: Query<Entity, (With<WorkerCollectable>, Without<WorkerData>)>) {
+    for (mut worker_tf,mut worker_data) in &mut workers {
+        if worker_data.target_coin_dir == Option::None || worker_data.target_coin_pos == Option::None { continue; }
+
+        let speed = 1.0;
+        let offset = 0.2;
+        let worker_pos = worker_data.target_coin_pos.unwrap();
+        let worker_dir = worker_data.target_coin_dir.unwrap();
+
+        if worker_tf.translation.x > (worker_pos.x - offset) && worker_tf.translation.x < (worker_pos.x + offset) {
+            worker_data.coins += 1;
+            cmm.entity(worker_data.target_coin_entity.unwrap()).despawn();
+        }else { worker_tf.translation -= worker_dir * speed * time.delta_secs(); }
+        
+        if let Some(_) = coins.iter().find(|c|worker_data.target_coin_entity != Option::None && *c == worker_data.target_coin_entity.unwrap()) { }else { // if coin despawn then worker stops moving
+            worker_data.target_coin_dir = Option::None;
+            worker_data.target_coin_pos = Option::None;
+            worker_data.target_coin_entity = Option::None;
+        }
     }
 }
