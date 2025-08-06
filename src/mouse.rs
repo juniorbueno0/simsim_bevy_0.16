@@ -61,7 +61,7 @@ fn cursor_to_world_position(
     q_window: Query<&Window, With<PrimaryWindow>>,
     q_camera: Query<(&Camera, &GlobalTransform), With<MainCamera>>,
 ) {
-    let Some(cursor_moved) = cursor_events.read().last() else { return };
+    let Some(_) = cursor_events.read().last() else { return };
 
     // assuming there is exactly one main camera entity, so Query::single() is OK
     let (camera, camera_transform) = q_camera.single().unwrap();

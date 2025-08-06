@@ -82,7 +82,7 @@ fn spawn_new_chunks(mut commands:Commands,mut loaded_chunks:ResMut<LoadedChunks>
 fn delete_old_chunks(mut commands:Commands,query: Query<(Entity, &ChunkMarker), With<ChunkMarker>>,desired_chunks:Res<DesiredChunks>,mut loaded_chunks:ResMut<LoadedChunks>) {
     for (entity, marker) in query.iter() {
         if !desired_chunks.0.contains(&marker.chunk_coords) {
-            commands.entity(entity).despawn_recursive();
+            commands.entity(entity).despawn();
             loaded_chunks.0.remove(&marker.chunk_coords);
         }
     }
