@@ -62,3 +62,6 @@ fn main() {
 // player inventory / ui_slot get decreased when spawned
 // player inventory gets removed at player.rs
 // ui buttons are reseted at gameui.rs
+
+// bugs
+// worker moves in the coin dir but it never stops

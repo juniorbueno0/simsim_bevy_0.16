@@ -2,6 +2,7 @@ use bevy::{platform::collections::HashSet, prelude::*};
 
 use crate::gameui::{ItemSelected, UiItemSlotButton, UiSlot};
 use crate::mouse::{MyWorldCoords, PointingAtUi};
+use crate::worker::WorkerCollectable;
 
 pub const INVENTORYSIZE: i32 = 6;
 const MAXSTACKSIZE: i32 = 999;
@@ -76,6 +77,7 @@ fn drop_coin(
                         ..default()
                     },
                     Transform::from_xyz(world_coords.0.x, world_coords.0.y, 2.),
+                    WorkerCollectable,
                     Item::Coin
                 ));
                 coins.positions.insert((world_coords.0.x as i32, world_coords.0.y as i32));
