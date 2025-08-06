@@ -15,8 +15,8 @@ pub enum Item {
 }
 
 #[derive(Debug, Resource)]
-struct CoinsSpawned {
-    positions: HashSet<(i32,i32)>
+pub struct CoinsSpawned {
+    pub positions: HashSet<(i32,i32)>
 }
 
 #[derive(Debug, Component)]
