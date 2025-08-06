@@ -88,19 +88,26 @@ fn worker_amount_update(
 
 // patrol function
 
-fn wwwz(mut workers: Query<(&mut Transform, &mut WorkerData, Entity), (With<WorkerData>, Without<WorkerCollectable>)>, coins: Query<(&Transform, Entity, &Item), (With<WorkerCollectable>, Without<WorkerData>)>) {
+fn wwwz(mut workers: Query<(&mut Transform, &mut WorkerData,), (With<WorkerData>, Without<WorkerCollectable>)>, coins: Query<(&Transform, Entity, &Item), (With<WorkerCollectable>, Without<WorkerData>)>) {
     let distance: f32 = 8.;
 
-    // if let Some(worker) = 
-
-    for (tf, mut data, ent) in &mut workers {
-        if let Some(coin) = coins.iter().find(|c| (c.0.translation.x - tf.translation.x).norm() < distance && (c.0.translation.y - tf.translation.y).norm() < distance) {
-            let dir = (tf.translation - coin.0.translation).normalize_or_zero();
-            data.target_coin_dir = Some(dir);
-            data.target_coin_pos = Some(coin.0.translation);
-            data.target_coin_entity = Some(coin.1);
+    if let Some(mut w) = workers.iter_mut().find(|w|w.1.target_coin_pos == Option::None) {
+        if let Some(coin) = coins.iter().find(|c| (c.0.translation.x - w.0.translation.x).norm() < distance && (c.0.translation.y - w.0.translation.y).norm() < distance) {
+            let dir = (w.0.translation - coin.0.translation).normalize_or_zero();
+            w.1.target_coin_dir = Some(dir);
+            w.1.target_coin_pos = Some(coin.0.translation);
+            w.1.target_coin_entity = Some(coin.1);
         }
     }
+
+    // for (tf, mut data) in &mut workers {
+    //     if let Some(coin) = coins.iter().find(|c| (c.0.translation.x - tf.translation.x).norm() < distance && (c.0.translation.y - tf.translation.y).norm() < distance) {
+    //         let dir = (tf.translation - coin.0.translation).normalize_or_zero();
+    //         data.target_coin_dir = Some(dir);
+    //         data.target_coin_pos = Some(coin.0.translation);
+    //         data.target_coin_entity = Some(coin.1);
+    //     }
+    // }
 }
 
 fn wwwy(time: Res<Time>, mut cmm: Commands, mut coins_spawned: ResMut<CoinsSpawned>, mut workers: Query<(&mut Transform, &mut WorkerData), (With<WorkerData>, Without<WorkerCollectable>)>, coins: Query<Entity, (With<WorkerCollectable>, Without<WorkerData>)>) {
