@@ -91,7 +91,7 @@ fn worker_amount_update(
 fn wwwz(mut workers: Query<(&mut Transform, &mut WorkerData,), (With<WorkerData>, Without<WorkerCollectable>)>, coins: Query<(&Transform, Entity, &Item), (With<WorkerCollectable>, Without<WorkerData>)>) {
     let distance: f32 = 8.;
 
-    if let Some(mut w) = workers.iter_mut().find(|w|w.1.target_coin_pos == Option::None) {
+    if let Some(mut w) = workers.iter_mut().find(|w|(w.1.target_coin_pos == Option::None) && (w.1.coins <= 0)) {
         if let Some(coin) = coins.iter().find(|c| (c.0.translation.x - w.0.translation.x).norm() < distance && (c.0.translation.y - w.0.translation.y).norm() < distance) {
             let dir = (w.0.translation - coin.0.translation).normalize_or_zero();
             w.1.target_coin_dir = Some(dir);
@@ -112,23 +112,30 @@ fn wwwz(mut workers: Query<(&mut Transform, &mut WorkerData,), (With<WorkerData>
 
 fn wwwy(time: Res<Time>, mut cmm: Commands, mut coins_spawned: ResMut<CoinsSpawned>, mut workers: Query<(&mut Transform, &mut WorkerData), (With<WorkerData>, Without<WorkerCollectable>)>, coins: Query<Entity, (With<WorkerCollectable>, Without<WorkerData>)>) {
     for (mut worker_tf,mut worker_data) in &mut workers {
-        if worker_data.target_coin_dir == Option::None || worker_data.target_coin_pos == Option::None { continue; }
+        if worker_data.target_coin_dir == Option::None || worker_data.target_coin_pos == Option::None || worker_data.target_coin_entity == Option::None { continue; }
 
         let speed = 1.0;
         let offset = 0.1;
         let worker_pos = worker_data.target_coin_pos.unwrap();
         let worker_dir = worker_data.target_coin_dir.unwrap();
 
+        let reset_worker_coin_data = | worker: &mut WorkerData | {
+            worker.target_coin_dir = Option::None;
+            worker.target_coin_pos = Option::None;
+            worker.target_coin_entity = Option::None;
+        };
+
         if worker_tf.translation.x > (worker_pos.x - offset) && worker_tf.translation.x < (worker_pos.x + offset) {
             worker_data.coins += 1;
+            // println!(" collected a coin ");
             cmm.entity(worker_data.target_coin_entity.unwrap()).despawn();
             coins_spawned.positions.remove(&(worker_tf.translation.x as i32, worker_tf.translation.y as i32)); // not working properly
+
+            reset_worker_coin_data(&mut worker_data);
         }else { worker_tf.translation -= worker_dir * speed * time.delta_secs(); }
         
         if let Some(_) = coins.iter().find(|c|worker_data.target_coin_entity != Option::None && *c == worker_data.target_coin_entity.unwrap()) { }else { // if coin despawn then worker stops moving
-            worker_data.target_coin_dir = Option::None;
-            worker_data.target_coin_pos = Option::None;
-            worker_data.target_coin_entity = Option::None;
+            reset_worker_coin_data(&mut worker_data);
         }
     }
 }
