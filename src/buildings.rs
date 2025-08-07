@@ -20,6 +20,20 @@ struct BuildingBundle {
     tipe: BuildingType,
 }
 
+#[derive(Debug, Component)]
+pub struct HouseData {
+    pub building_type: BuildingType,
+    pub assigned_workers: HashSet<Entity>,
+    pub max_capacity: i32
+}
+
+#[derive(Debug, Bundle)]
+struct HouseBuildingBundle {
+    tf: Transform,
+    sprite: Sprite,
+    data: HouseData,
+}
+
 pub struct MyBuildingPlugin;
 
 impl Plugin for MyBuildingPlugin {
@@ -47,12 +61,17 @@ fn spawn_houses(
             stack.total_amount -= 1;
             if let Some(mut ui_slot) = ui_buttons.iter_mut().find(|(slot,e)| (*e == stack.ui_entity) && slot.amount >= 1) {
                 ui_slot.0.amount -= 1;
-                cmm.spawn(BuildingBundle {
+
+                cmm.spawn(HouseBuildingBundle {
                     sprite: Sprite { color:Color::srgb(0.9, 0.9, 0.8), custom_size: Some(vec2(1., 1.)), ..default() },
                     tf: Transform::from_xyz(world_coords.0.x, world_coords.0.y, 2.),
-                    tipe: BuildingType::House
+                    data: HouseData {
+                        building_type: BuildingType::House,
+                        assigned_workers: HashSet::new(),
+                        max_capacity: 2
+                    }
                 });
-
+                
                 buildings.data.insert(((world_coords.0.x as i32, world_coords.0.y as i32), BuildingType::House));
             }
         }

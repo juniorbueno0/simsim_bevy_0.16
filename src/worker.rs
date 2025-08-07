@@ -1,6 +1,6 @@
 use bevy::{math::NormedVectorSpace, prelude::*};
 
-use crate::{buildings::{BuildingType, Buildings}, player::{CoinsSpawned, Item}};
+use crate::{buildings::{BuildingType, Buildings, HouseData}, player::{CoinsSpawned, Item}};
 
 #[derive(Debug, Resource)]
 pub struct WorkerAmount { total: i32 }
@@ -32,7 +32,7 @@ impl Plugin for MyWorkerPlugin {
         app.add_systems(Startup, setup);
         app.add_systems(Update, worker_amount_update);
         // app.add_systems(Update, (wwwz, wwwy));
-        app.add_systems(Update, (wwwz, wwwy));
+        app.add_systems(Update, (wwwz, wwwy, wwwx, wwww));
     }
 }
 
@@ -91,23 +91,24 @@ fn worker_amount_update(
 fn wwwz(mut workers: Query<(&mut Transform, &mut WorkerData,), (With<WorkerData>, Without<WorkerCollectable>)>, coins: Query<(&Transform, Entity, &Item), (With<WorkerCollectable>, Without<WorkerData>)>) {
     let distance: f32 = 8.;
 
-    if let Some(mut w) = workers.iter_mut().find(|w|(w.1.target_coin_pos == Option::None) && (w.1.coins <= 0)) {
-        if let Some(coin) = coins.iter().find(|c| (c.0.translation.x - w.0.translation.x).norm() < distance && (c.0.translation.y - w.0.translation.y).norm() < distance) {
-            let dir = (w.0.translation - coin.0.translation).normalize_or_zero();
-            w.1.target_coin_dir = Some(dir);
-            w.1.target_coin_pos = Some(coin.0.translation);
-            w.1.target_coin_entity = Some(coin.1);
-        }
-    }
-
-    // for (tf, mut data) in &mut workers {
-    //     if let Some(coin) = coins.iter().find(|c| (c.0.translation.x - tf.translation.x).norm() < distance && (c.0.translation.y - tf.translation.y).norm() < distance) {
-    //         let dir = (tf.translation - coin.0.translation).normalize_or_zero();
-    //         data.target_coin_dir = Some(dir);
-    //         data.target_coin_pos = Some(coin.0.translation);
-    //         data.target_coin_entity = Some(coin.1);
+    // if let Some(mut w) = workers.iter_mut().find(|w|(w.1.target_coin_pos == Option::None) && (w.1.coins <= 0)) {
+    //     if let Some(coin) = coins.iter().find(|c| (c.0.translation.x - w.0.translation.x).norm() < distance && (c.0.translation.y - w.0.translation.y).norm() < distance) {
+    //         let dir = (w.0.translation - coin.0.translation).normalize_or_zero();
+    //         w.1.target_coin_dir = Some(dir);
+    //         w.1.target_coin_pos = Some(coin.0.translation);
+    //         w.1.target_coin_entity = Some(coin.1);
     //     }
     // }
+
+    for (tf, mut data) in &mut workers {
+
+        if let Some(coin) = coins.iter().find(|c| (c.0.translation.x - tf.translation.x).norm() < distance && (c.0.translation.y - tf.translation.y).norm() < distance && data.coins < 1) {
+            let dir = (tf.translation - coin.0.translation).normalize_or_zero();
+            data.target_coin_dir = Some(dir);
+            data.target_coin_pos = Some(coin.0.translation);
+            data.target_coin_entity = Some(coin.1);
+        }
+    }
 }
 
 fn wwwy(time: Res<Time>, mut cmm: Commands, mut coins_spawned: ResMut<CoinsSpawned>, mut workers: Query<(&mut Transform, &mut WorkerData), (With<WorkerData>, Without<WorkerCollectable>)>, coins: Query<Entity, (With<WorkerCollectable>, Without<WorkerData>)>) {
@@ -127,7 +128,7 @@ fn wwwy(time: Res<Time>, mut cmm: Commands, mut coins_spawned: ResMut<CoinsSpawn
 
         if worker_tf.translation.x > (worker_pos.x - offset) && worker_tf.translation.x < (worker_pos.x + offset) {
             worker_data.coins += 1;
-            // println!(" collected a coin ");
+            println!(" collected a coin ");
             cmm.entity(worker_data.target_coin_entity.unwrap()).despawn();
             coins_spawned.positions.remove(&(worker_tf.translation.x as i32, worker_tf.translation.y as i32)); // not working properly
 
@@ -136,6 +137,28 @@ fn wwwy(time: Res<Time>, mut cmm: Commands, mut coins_spawned: ResMut<CoinsSpawn
         
         if let Some(_) = coins.iter().find(|c|worker_data.target_coin_entity != Option::None && *c == worker_data.target_coin_entity.unwrap()) { }else { // if coin despawn then worker stops moving
             reset_worker_coin_data(&mut worker_data);
+        }
+    }
+}
+
+// assign it to an available home
+fn wwwx(mut houses: Query<(&mut HouseData, &Transform)>, mut workers: Query<(&Transform, &mut WorkerData, Entity), (With<WorkerData>, Without<WorkerCollectable>)>) {
+    if let Some(mut house) = houses.iter_mut().find(|(h, _)| h.building_type == BuildingType::House && h.assigned_workers.len() < h.max_capacity as usize ) {
+        if let Some(mut worker) = workers.iter_mut().find(|w|w.1.coins == 1 && w.1.house_pos == (0,0)) {
+            worker.1.house_pos = (house.1.translation.x as i32,house.1.translation.y as i32);
+            house.0.assigned_workers.insert(worker.2);
+            println!("assigned: {:?}", worker.2);
+        }
+    } else { return; }
+}
+
+// the worker walks to his house
+fn wwww(time: Res<Time>, mut workers: Query<(&mut Transform, &WorkerData, Entity), (With<WorkerData>, Without<WorkerCollectable>)>) {
+
+    for mut w in &mut workers { // change it to filter thern iter
+        if w.1.coins == 1 && w.1.house_pos != (0,0) {
+            let dir = w.0.translation - Vec3::new(w.1.house_pos.0 as f32,w.1.house_pos.1 as f32, 1.);
+            w.0.translation -= dir * time.delta_secs();
         }
     }
 }
