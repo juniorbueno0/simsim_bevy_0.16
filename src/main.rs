@@ -1,7 +1,9 @@
 use bevy::{image::ImageSamplerDescriptor, prelude::*, render::{settings::{Backends, RenderCreation, WgpuSettings}, RenderPlugin}, window::WindowResolution};
 
 mod grid;
+mod crop;
 mod mouse;
+mod world;
 mod camera;
 mod player;
 mod gameui;
@@ -19,22 +21,21 @@ fn main() {
     let mut app: App = App::new();
 
     app.add_plugins(DefaultPlugins.set(RenderPlugin {
-            render_creation: RenderCreation::Automatic(WgpuSettings{backends:Some(Backends::VULKAN),..default()}),
-            ..default()
-        }
-    ).set(
-        ImagePlugin { default_sampler: ImageSamplerDescriptor::nearest() }
+        render_creation: RenderCreation::Automatic(WgpuSettings{backends:Some(Backends::VULKAN),..default()}),
+        ..default()
+    }).set(ImagePlugin { default_sampler: ImageSamplerDescriptor::nearest() }
     ).set(WindowPlugin { 
-            primary_window: Some(Window {
-                resolution:WindowResolution::new(800.,600.).with_scale_factor_override(1.),
-                ..default()
-            }),
+        primary_window: Some(Window {
+            resolution:WindowResolution::new(800.,600.).with_scale_factor_override(1.),
             ..default()
-        }
-    ));
+        }),
+        ..default()
+    }));
 
     app.add_plugins(grid::MyGridPlugin);
+    app.add_plugins(crop::MyCropPlugin);
     app.add_plugins(mouse::MyMousePlugin);
+    app.add_plugins(world::MyWorldPlugin);
     app.add_plugins(player::MyPlayerPlugin);
     app.add_plugins(camera::MyCameraPlugin);
     app.add_plugins(gameui::MyGameUiPlugin);
@@ -48,6 +49,7 @@ fn main() {
 // search for a coin
 // if have a coin they go to a house
 // spawn and patrol specific biome
+// workers leave their houses between working hours then they go back to rest
 
 // player
 // can drop a coin
@@ -61,6 +63,7 @@ fn main() {
 // item amount manage
 // player inventory / ui_slot get decreased when spawned
 // player inventory gets removed at player.rs
-// ui buttons are reseted at gameui.rs
+// ui buttons are reseted to none at gameui.rs
 
+// bugs
 // all workers find the same coin not the closest one to their position

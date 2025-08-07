@@ -1,6 +1,6 @@
 use bevy::{math::NormedVectorSpace, prelude::*};
 
-use crate::{buildings::{BuildingType, Buildings, HouseData}, player::{CoinsSpawned, Item}};
+use crate::{buildings::{BuildingType, Buildings, HouseData}, player::{CoinsSpawned, ItemType}};
 
 #[derive(Debug, Resource)]
 pub struct WorkerAmount { total: i32 }
@@ -79,26 +79,17 @@ fn setup(mut cmm: Commands) {
 }
 
 fn worker_amount_update(
-    buildings: Res<Buildings>,
+    buildings: Query<&BuildingType>,
     mut workers: ResMut<WorkerAmount>
 ) {
-    let houses = buildings.data.iter().filter(|d|d.1 == BuildingType::House).count();
+    let houses = buildings.iter().count();
     workers.total = (houses * 2) as i32; // change later when houses can be upgraded
 }
 
 // patrol function
 
-fn wwwz(mut workers: Query<(&mut Transform, &mut WorkerData,), (With<WorkerData>, Without<WorkerCollectable>)>, coins: Query<(&Transform, Entity, &Item), (With<WorkerCollectable>, Without<WorkerData>)>) {
+fn wwwz(mut workers: Query<(&mut Transform, &mut WorkerData,), (With<WorkerData>, Without<WorkerCollectable>)>, coins: Query<(&Transform, Entity, &ItemType), (With<WorkerCollectable>, Without<WorkerData>)>) {
     let distance: f32 = 8.;
-
-    // if let Some(mut w) = workers.iter_mut().find(|w|(w.1.target_coin_pos == Option::None) && (w.1.coins <= 0)) {
-    //     if let Some(coin) = coins.iter().find(|c| (c.0.translation.x - w.0.translation.x).norm() < distance && (c.0.translation.y - w.0.translation.y).norm() < distance) {
-    //         let dir = (w.0.translation - coin.0.translation).normalize_or_zero();
-    //         w.1.target_coin_dir = Some(dir);
-    //         w.1.target_coin_pos = Some(coin.0.translation);
-    //         w.1.target_coin_entity = Some(coin.1);
-    //     }
-    // }
 
     for (tf, mut data) in &mut workers {
 

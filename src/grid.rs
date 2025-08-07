@@ -5,6 +5,13 @@ use bevy::prelude::*;
 
 use crate::camera::MainCameraActualPosition;
 
+#[derive(Debug, Component)]
+enum SquareType {
+    Grass,
+    Sand,
+    Water
+}
+
 #[derive(Debug, Resource)]
 struct PerlinInstance { value: Perlin }
 
