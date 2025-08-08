@@ -41,11 +41,12 @@ pub enum CropType {
 
 #[derive(Debug, Component)]
 pub struct PreparedDirtData {
-    item_type: ItemType,
-    crop_type: CropType,
-    growth_state: i32,
-    growth_complete: bool,
-    growth_state_timer: Timer,
+    pub item_type: ItemType,
+    pub crop_type: CropType,
+    pub growth_state: i32,
+    pub growth_complete: bool,
+    pub growth_state_timer: Timer,
+    pub worker_assigned: Entity
 }
 
 #[derive(Bundle)]
@@ -114,7 +115,8 @@ fn spawn_items(
                             crop_type: CropType::Potato, // add none as default later
                             growth_state: 0,
                             growth_state_timer: Timer::from_seconds(60., TimerMode::Once),
-                            growth_complete: false
+                            growth_complete: false,
+                            worker_assigned: Entity::from_raw(0)
                         }
                     });
                     true
