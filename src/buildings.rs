@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 use bevy::prelude::*;
 
-use crate::{gameui::{ItemSelected, UiItemSlotButton, UiSlot}, mouse::{MyWorldCoords, PointingAtUi}, player::{ItemType, PlayerInventory}, worker::WorkerCollectable};
+use crate::{gameui::{ItemSelected, UiItemSlotButton, UiSlot}, mouse::{MyWorldCoords, PointingAtUi}, player::{ItemType, PlayerInventory}, worker::{WorkerBundle, WorkerCollectable, WorkerData}};
 
 // #[derive(Resource, PartialEq, Eq)]
 // pub struct Buildings {
@@ -121,6 +121,18 @@ fn spawn_items(
                     });
                     true
                 },
+                ItemType::Worker => {
+                    cmm.spawn(WorkerBundle {
+                        spr: Sprite {
+                                color: Color::srgb(1., 0.4, 0.4),
+                                custom_size: Some(Vec2 { x: 1., y: 1. }),
+                                ..default()
+                            },
+                        tf: Transform::from_xyz(world_coords.0.x, world_coords.0.y, 2.),
+                        data: WorkerData { coins: 0, target_coin_entity: Option::None, target_coin_pos: Option::None, target_coin_dir: Option::None, house_pos: (0,0), house_assigned: false }
+                    });
+                    false
+                }
                 _=> { false }
             };
 

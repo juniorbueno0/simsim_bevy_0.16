@@ -18,7 +18,8 @@ pub enum ItemType {
     Coin,
     House,
     Shovel,
-    Dirt
+    Dirt,
+    Worker // testing
 }
 
 #[derive(Debug, Resource)]
@@ -57,6 +58,7 @@ fn init(mut inventory: ResMut<PlayerInventory>) {
     inventory.items.push(ItemStack { item: ItemType::Coin, total_amount: 64, max_amount: MAXSTACKSIZE, assigned: false, ui_entity: Entity::from_raw(0) });
     inventory.items.push(ItemStack { item: ItemType::House, total_amount: 32, max_amount: MAXSTACKSIZE, assigned: false, ui_entity: Entity::from_raw(0) });
     inventory.items.push(ItemStack { item: ItemType::Dirt, total_amount: 16, max_amount: MAXSTACKSIZE, assigned: false, ui_entity: Entity::from_raw(0) });
+    inventory.items.push(ItemStack { item: ItemType::Worker, total_amount: 999, max_amount: MAXSTACKSIZE, assigned: false, ui_entity: Entity::from_raw(0) });
 }
 
 // if a player inventory gets to 0 it gets removed

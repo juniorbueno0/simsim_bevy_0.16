@@ -32,7 +32,7 @@ fn main() {
         ..default()
     }));
 
-    app.add_plugins(grid::MyGridPlugin);
+    // app.add_plugins(grid::MyGridPlugin);
     app.add_plugins(crop::MyCropPlugin);
     app.add_plugins(mouse::MyMousePlugin);
     app.add_plugins(world::MyWorldPlugin);
@@ -65,5 +65,9 @@ fn main() {
 // player inventory gets removed at player.rs
 // ui buttons are reseted to none at gameui.rs
 
+// PENDING SYSTEMS
+// implement a patroling system
+
 // bugs
 // all workers find the same coin not the closest one to their position
+// house detection offset causes multiple employes to get the same coin 

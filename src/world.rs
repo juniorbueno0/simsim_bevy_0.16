@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use crate::{buildings::HouseData, worker::WorkerData};
+
 const HOUR: f32 = 5.0;
 
 #[derive(Debug, Component)]
@@ -22,6 +24,8 @@ impl Plugin for MyWorldPlugin {
         app.insert_resource(WorldSettings { day_timer: Timer::from_seconds(HOUR, TimerMode::Repeating), actual_hour: 0.0,  meridiem: Meridiem::AM });
    
         app.add_systems(Update, day_timer_tick);
+        app.add_systems(Update, clean_scene);
+
     }
 }
 
@@ -38,6 +42,18 @@ fn day_timer_tick(time: Res<Time>, mut day: ResMut<WorldSettings>) {
                 Meridiem::PM => { Meridiem::AM }
             }
         }
-        println!("{:?} {:?}", day.actual_hour, day.meridiem);
+        // println!("{:?} {:?}", day.actual_hour, day.meridiem);
+    }
+}
+
+fn clean_scene(mut cmm: Commands, input: Res<ButtonInput<KeyCode>>, w: Query<Entity, With<WorkerData>>, h: Query<Entity, With<HouseData>>) {
+    if input.just_pressed(KeyCode::KeyR) {
+        for worker in w {
+            cmm.entity(worker).despawn();
+        }
+
+        for house in h {
+            cmm.entity(house).despawn();
+        }
     }
 }
