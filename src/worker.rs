@@ -1,6 +1,8 @@
+use std::option;
+
 use bevy::{math::NormedVectorSpace, platform::collections::HashSet, prelude::*};
 
-use crate::{buildings::{BuildingType, Buildings, HouseData}, player::{CoinsSpawned, ItemType}, worker};
+use crate::{buildings::{BuildingType, Buildings, HouseData, PreparedDirtData}, player::{CoinsSpawned, ItemType}, world::{Meridiem, WorldSettings}};
 
 #[derive(Debug, Resource)]
 pub struct WorkerAmount { total: i32 }
@@ -12,13 +14,18 @@ pub struct WorkerCollectable;
 struct Employed;
 
 #[derive(Component)]
+struct Working;
+
+#[derive(Component)]
 pub struct WorkerData {
     pub coins: i32,
     pub house_pos: (i32,i32),
     pub house_assigned: bool,
-    pub target_coin_entity: Option<Entity>,
+    pub target_crop_pos: Option<Vec3>,
+    pub target_crop_entity: Option<Entity>,
     pub target_coin_pos: Option<Vec3>,
     pub target_coin_dir: Option<Vec3>,
+    pub target_coin_entity: Option<Entity>,
 }
 
 #[derive(Bundle)]
@@ -36,7 +43,7 @@ impl Plugin for MyWorkerPlugin {
         app.add_systems(Startup, setup);
         app.add_systems(Update, worker_amount_update);
         // SYSTEMS []
-        app.add_systems(Update, (worker_collect_coin, worker_assign_home));
+        app.add_systems(Update, (worker_collect_coin, worker_assign_home, worker_life_cycle));
         // app.add_systems(Update, (wwww,wwwx,wwwy,wwwz));
         // app.add_systems(Update, (wwwy,wwwz,worker_assign_home));
     }
@@ -50,37 +57,16 @@ fn setup(mut cmm: Commands) {
                 ..default()
             },
         tf: Transform::from_xyz(4.,4., 2.),
-        data: WorkerData { coins: 0, target_coin_entity: Option::None, target_coin_pos: Option::None, target_coin_dir: Option::None, house_pos: (0,0), house_assigned: false }
-    });
-
-    cmm.spawn(WorkerBundle {
-        spr: Sprite {
-                color: Color::srgb(1., 0.4, 0.4),
-                custom_size: Some(Vec2 { x: 1., y: 1. }),
-                ..default()
-            },
-        tf: Transform::from_xyz(12.,12., 2.),
-        data: WorkerData { coins: 0, target_coin_entity: Option::None, target_coin_pos: Option::None, target_coin_dir: Option::None, house_pos: (0,0), house_assigned: false }
-    });
-
-    cmm.spawn(WorkerBundle {
-        spr: Sprite {
-                color: Color::srgb(1., 0.4, 0.4),
-                custom_size: Some(Vec2 { x: 1., y: 1. }),
-                ..default()
-            },
-        tf: Transform::from_xyz(4.,12., 2.),
-        data: WorkerData { coins: 0, target_coin_entity: Option::None, target_coin_pos: Option::None, target_coin_dir: Option::None, house_pos: (0,0), house_assigned: false }
-    });
-
-    cmm.spawn(WorkerBundle {
-        spr: Sprite {
-                color: Color::srgb(1., 0.4, 0.4),
-                custom_size: Some(Vec2 { x: 1., y: 1. }),
-                ..default()
-            },
-        tf: Transform::from_xyz(12.,4., 2.),
-        data: WorkerData { coins: 0, target_coin_entity: Option::None, target_coin_pos: Option::None, target_coin_dir: Option::None, house_pos: (0,0), house_assigned: false }
+        data: WorkerData { 
+            coins: 0,
+            target_crop_pos: Option::None,
+            target_crop_entity: Option::None,
+            target_coin_entity: Option::None, 
+            target_coin_pos: Option::None, 
+            target_coin_dir: Option::None, 
+            house_pos: (0,0), 
+            house_assigned: false 
+        }
     });
 }
 
@@ -102,8 +88,7 @@ fn worker_collect_coin(
 ) {
     let worker_view_distance = 8.;
 
-    let mut coins_assigned: HashSet<Entity> = HashSet::new(); // coins assigned to a worker 
-
+    let mut coins_assigned: HashSet<Entity> = HashSet::new(); // coins assigned to a worker
     let workers_iterator: Vec<_> = workers.iter_mut().collect(); 
 
     for (mut worker_tf, mut worker_data, worker_entity) in workers_iterator {
@@ -153,7 +138,8 @@ fn worker_collect_coin(
 }
 
 fn worker_assign_home(
-    mut houses: Query<(&mut HouseData, &Transform, Entity), (With<HouseData>, Without<Employed>)>, 
+    mut cmm: Commands,
+    mut houses: Query<(&mut HouseData, &Transform, Entity), (With<HouseData>, Without<Employed>)>,
     mut workers_query: Query<(&mut Transform, &mut WorkerData, Entity), With<Employed>>
 ) {
     if let Some(mut available_house) = houses.iter_mut().find(|house| house.0.assigned_workers.len() < 1) {
@@ -166,7 +152,42 @@ fn worker_assign_home(
                 employed_worker.1.house_pos = (available_house.1.translation.x as i32, available_house.1.translation.y as i32);
                 employed_worker.0.translation = Vec3::new(available_house.1.translation.x, available_house.1.translation.y, 2.);
                 employed_worker.1.house_assigned = true;
+                cmm.entity(employed_worker.2).insert(Working);
+                cmm.entity(employed_worker.2).remove::<Employed>();
             } 
+        }
+    }
+}
+
+fn worker_life_cycle(
+    time: Res<Time>,
+    day: Res<WorldSettings>,
+    mut crops: Query<(&Transform, &mut PreparedDirtData, Entity), (With<PreparedDirtData>, Without<Working>)>,
+    mut worker: Query<(&mut Transform, &mut WorkerData, Entity), (With<Working>, Without<Employed>)>
+) {
+    for mut w in worker.iter_mut() {
+        
+        // assign
+        if let Some(mut crop) = crops.iter_mut().find(|c|!c.1.worker_assigned_bool && w.1.target_crop_pos == Option::None) {
+            crop.1.worker_assigned_bool = true;
+            crop.1.worker_assigned_entity = w.2;
+            w.1.target_crop_pos = Some(crop.0.translation);
+            w.1.target_crop_entity = Some(crop.2);
+        };
+
+        //move
+        if w.1.target_crop_pos != Option::None {
+            let is_work_time = 
+                (day.meridiem == Meridiem::AM && day.actual_hour >= 8.0) ||
+                (day.meridiem == Meridiem::PM && day.actual_hour < 9.0);
+
+            if is_work_time {
+                let dir = w.0.translation - w.1.target_crop_pos.unwrap(); 
+                w.0.translation -= dir * time.delta_secs();
+            } else {
+                let dir = w.0.translation - Vec3::new(w.1.house_pos.0 as f32,w.1.house_pos.1 as f32,2.); 
+                w.0.translation -= dir * time.delta_secs();
+            }
         }
     }
 }

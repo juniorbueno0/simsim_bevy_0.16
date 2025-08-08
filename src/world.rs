@@ -4,8 +4,8 @@ use crate::{buildings::HouseData, worker::WorkerData};
 
 const HOUR: f32 = 5.0;
 
-#[derive(Debug, Component)]
-enum Meridiem {
+#[derive(Debug, Component, PartialEq, Eq)]
+pub enum Meridiem {
     AM,
     PM
 }
@@ -13,8 +13,8 @@ enum Meridiem {
 #[derive(Debug, Resource)]
 pub struct WorldSettings {
     day_timer: Timer,
-    actual_hour: f32,
-    meridiem: Meridiem
+    pub actual_hour: f32,
+    pub meridiem: Meridiem
 }
 
 pub struct MyWorldPlugin;
@@ -42,7 +42,7 @@ fn day_timer_tick(time: Res<Time>, mut day: ResMut<WorldSettings>) {
                 Meridiem::PM => { Meridiem::AM }
             }
         }
-        // println!("{:?} {:?}", day.actual_hour, day.meridiem);
+        println!("{:?} {:?}", day.actual_hour, day.meridiem);
     }
 }
 

@@ -46,7 +46,8 @@ pub struct PreparedDirtData {
     pub growth_state: i32,
     pub growth_complete: bool,
     pub growth_state_timer: Timer,
-    pub worker_assigned: Entity
+    pub worker_assigned_bool: bool,
+    pub worker_assigned_entity: Entity
 }
 
 #[derive(Bundle)]
@@ -116,7 +117,8 @@ fn spawn_items(
                             growth_state: 0,
                             growth_state_timer: Timer::from_seconds(60., TimerMode::Once),
                             growth_complete: false,
-                            worker_assigned: Entity::from_raw(0)
+                            worker_assigned_bool: false,
+                            worker_assigned_entity: Entity::from_raw(0)
                         }
                     });
                     true
@@ -129,7 +131,7 @@ fn spawn_items(
                                 ..default()
                             },
                         tf: Transform::from_xyz(world_coords.0.x, world_coords.0.y, 2.),
-                        data: WorkerData { coins: 0, target_coin_entity: Option::None, target_coin_pos: Option::None, target_coin_dir: Option::None, house_pos: (0,0), house_assigned: false }
+                        data: WorkerData { coins: 0, target_coin_entity: Option::None, target_coin_pos: Option::None, target_coin_dir: Option::None, house_pos: (0,0), house_assigned: false, target_crop_entity: Option::None, target_crop_pos: Option::None }
                     });
                     false
                 }
