@@ -131,7 +131,17 @@ fn spawn_items(
                                 ..default()
                             },
                         tf: Transform::from_xyz(world_coords.0.x, world_coords.0.y, 2.),
-                        data: WorkerData { coins: 0, target_coin_entity: Option::None, target_coin_pos: Option::None, target_coin_dir: Option::None, house_pos: (0,0), house_assigned: false, target_crop_entity: Option::None, target_crop_pos: Option::None }
+                        data: WorkerData { 
+                            coins: 0, 
+                            target_coin_entity: Option::None, 
+                            target_coin_pos: Option::None, 
+                            target_coin_dir: Option::None, 
+                            house_pos: (0,0), 
+                            house_assigned: false, 
+                            target_crop_entity: Option::None,
+                            target_crop_active: false,
+                            target_crop_pos: Option::None 
+                        }
                     });
                     false
                 }

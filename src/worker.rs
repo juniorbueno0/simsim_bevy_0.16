@@ -23,6 +23,7 @@ pub struct WorkerData {
     pub house_assigned: bool,
     pub target_crop_pos: Option<Vec3>,
     pub target_crop_entity: Option<Entity>,
+    pub target_crop_active: bool, // is closer to the crop?
     pub target_coin_pos: Option<Vec3>,
     pub target_coin_dir: Option<Vec3>,
     pub target_coin_entity: Option<Entity>,
@@ -61,6 +62,7 @@ fn setup(mut cmm: Commands) {
             coins: 0,
             target_crop_pos: Option::None,
             target_crop_entity: Option::None,
+            target_crop_active: false,
             target_coin_entity: Option::None, 
             target_coin_pos: Option::None, 
             target_coin_dir: Option::None, 
@@ -177,15 +179,16 @@ fn worker_life_cycle(
 
         //move
         if w.1.target_crop_pos != Option::None {
-            let is_work_time = 
+            let is_work_time =
                 (day.meridiem == Meridiem::AM && day.actual_hour >= 8.0) ||
                 (day.meridiem == Meridiem::PM && day.actual_hour < 9.0);
 
             if is_work_time {
-                let dir = w.0.translation - w.1.target_crop_pos.unwrap(); 
+                let dir = w.0.translation - w.1.target_crop_pos.unwrap();
                 w.0.translation -= dir * time.delta_secs();
+                if dir.x < 1.0 && dir.y < 1. { w.1.target_crop_active = true; }else { w.1.target_crop_active = false; } // crop growth active
             } else {
-                let dir = w.0.translation - Vec3::new(w.1.house_pos.0 as f32,w.1.house_pos.1 as f32,2.); 
+                let dir = w.0.translation - Vec3::new(w.1.house_pos.0 as f32,w.1.house_pos.1 as f32,2.);
                 w.0.translation -= dir * time.delta_secs();
             }
         }
