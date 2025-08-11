@@ -3,7 +3,8 @@ use bevy::prelude::*;
 use crate::buildings::PreparedDirtData;
 
 // idea
-// change the type and start the timer
+// spawn the prepared dirt 
+// select the type and then the timer start
 
 pub struct MyCropPlugin;
 

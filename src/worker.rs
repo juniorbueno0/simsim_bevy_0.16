@@ -19,6 +19,7 @@ struct Working;
 #[derive(Component)]
 pub struct WorkerData {
     pub coins: i32,
+    pub worker_speed: f32,
     pub house_pos: (i32,i32),
     pub house_assigned: bool,
     pub target_crop_pos: Option<Vec3>,
@@ -54,12 +55,13 @@ fn setup(mut cmm: Commands) {
     cmm.spawn(WorkerBundle {
         spr: Sprite {
                 color: Color::srgb(1., 0.4, 0.4),
-                custom_size: Some(Vec2 { x: 1., y: 1. }),
+                custom_size: Some(Vec2 { x: 0.5, y: 0.5 }),
                 ..default()
             },
         tf: Transform::from_xyz(4.,4., 2.),
         data: WorkerData { 
             coins: 0,
+            worker_speed: 1.0,
             target_crop_pos: Option::None,
             target_crop_entity: Option::None,
             target_crop_active: false,
@@ -109,8 +111,7 @@ fn worker_collect_coin(
 
         if worker_data.target_coin_dir == Option::None || worker_data.target_coin_pos == Option::None || worker_data.target_coin_entity == Option::None { continue; }
 
-        let speed = 1.0;
-        let offset = 0.1;
+        let offset = 0.5;
         let worker_pos = worker_data.target_coin_pos.unwrap();
         let worker_dir = worker_data.target_coin_dir.unwrap();
 
@@ -129,7 +130,7 @@ fn worker_collect_coin(
             coins_assigned.remove(&worker_data.target_coin_entity.unwrap());
 
             reset_worker_coin_data(&mut worker_data);
-        }else { worker_tf.translation -= worker_dir * speed * time.delta_secs(); }
+        }else { worker_tf.translation -= worker_dir * worker_data.worker_speed * time.delta_secs(); }
         
         if let Some(_) = coins_query.iter().find(|c|
             worker_data.target_coin_entity != Option::None && c.1==worker_data.target_coin_entity.unwrap()
@@ -186,8 +187,8 @@ fn worker_life_cycle( // optimize this later
             let crop_entity = crops.iter_mut().find(|c|c.2 == w.1.target_crop_entity.unwrap());
 
             if is_work_time {
-                let dir = w.0.translation - w.1.target_crop_pos.unwrap();
-                w.0.translation -= dir * time.delta_secs();
+                let dir = (w.0.translation - w.1.target_crop_pos.unwrap()).normalize_or_zero();
+                w.0.translation -= dir * w.1.worker_speed * time.delta_secs();
                 if dir.x < 1.0 && dir.y < 1. {
                     crop_entity.unwrap().1.growth_active = true;
                 }else { 
@@ -196,7 +197,7 @@ fn worker_life_cycle( // optimize this later
             } else {
                 crop_entity.unwrap().1.growth_active = false;
                 let dir = w.0.translation - Vec3::new(w.1.house_pos.0 as f32,w.1.house_pos.1 as f32,2.);
-                w.0.translation -= dir * time.delta_secs();
+                w.0.translation -= dir * w.1.worker_speed * time.delta_secs();
             }
         }
     }

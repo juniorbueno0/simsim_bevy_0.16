@@ -96,7 +96,7 @@ fn ui_setup(mut commands: Commands) {
                     // WORLD TIMER
                     ccc.spawn((
                         Node {
-                            width: Val::Px(90.),
+                            width: Val::Px(98.),
                             height: Val::Px(24.), 
                             display: Display::Flex,
                             flex_direction: FlexDirection::RowReverse,
@@ -235,7 +235,8 @@ fn ui_world_time_text(
     world: Res<WorldSettings>
 ) {
     if let Some(mut text) = ui_time_text.iter_mut().next() {
-        let world_time = format!("{:?}:00 {:?}",world.actual_hour as i32, world.meridiem);
+        let world_time = format!("{:?}:00 {:?}", world.actual_hour as i32, world.meridiem);
+        
         text.0 = world_time.to_string();
     };
 }
