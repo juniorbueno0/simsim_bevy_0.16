@@ -1,12 +1,15 @@
 use bevy::prelude::*;
 
-use crate::player::{ItemType, PlayerInventory, INVENTORYSIZE};
+use crate::{player::{ItemType, PlayerInventory, INVENTORYSIZE}, world::WorldSettings};
 
 #[derive(Component)]
 struct UiButton;
 
 #[derive(Component)]
 pub struct UiItemSlotButton;
+
+#[derive(Component)]
+pub struct UiWorldTime;
 
 #[derive(Resource, Debug)]
 pub struct ItemSelected {
@@ -38,7 +41,7 @@ impl Plugin for MyGameUiPlugin {
  
         app.add_systems(Startup, ui_setup);      
         app.add_systems(Update, (ui_slot_interactions, ui_load_items, ui_reset_slot, reset_player_item_selected));
-        app.add_systems(Update, ui_slot_text);
+        app.add_systems(Update, (ui_slot_text, ui_world_time_text));
     }
 }
 
@@ -69,7 +72,41 @@ fn ui_setup(mut commands: Commands) {
                     flex_direction: FlexDirection::Row,
                     ..default()
                 }, BackgroundColor(Color::srgb(rgb_topbar.0,rgb_topbar.1,rgb_topbar.2))
-            ));
+            )).with_children(|cc|{
+                // BUTTONS
+                cc.spawn((
+                    Node {
+                        width: Val::Percent(40.),
+                        height: Val::Px(24.), 
+                        display: Display::Flex,
+                        flex_direction: FlexDirection::Row,
+                        ..default()
+                    }, BackgroundColor(Color::srgb(rgb_topbar.0,rgb_topbar.1,rgb_topbar.2))
+                ));
+
+                cc.spawn(
+                    Node {
+                        width: Val::Percent(60.),
+                        height: Val::Px(24.), 
+                        display: Display::Flex,
+                        flex_direction: FlexDirection::RowReverse,
+                        ..default()
+                    }
+                ).with_children(|ccc| {
+                    // WORLD TIMER
+                    ccc.spawn((
+                        Node {
+                            width: Val::Px(90.),
+                            height: Val::Px(24.), 
+                            display: Display::Flex,
+                            flex_direction: FlexDirection::RowReverse,
+                            ..default()
+                        }, BackgroundColor(Color::srgb(0.4,0.6,0.6)),
+                        UiWorldTime,
+                        Text2d::new("00:00")
+                    ));
+                });
+            });
         });
 
         children.spawn(
@@ -191,6 +228,16 @@ fn ui_slot_text(
     for (slot, mut text) in &mut ui_slots {
         text.0 = slot.amount.to_string();
     }
+}
+
+fn ui_world_time_text(
+    mut ui_time_text: Query<&mut Text2d, With<UiWorldTime>>,
+    world: Res<WorldSettings>
+) {
+    if let Some(mut text) = ui_time_text.iter_mut().next() {
+        let world_time = format!("{:?}:00 {:?}",world.actual_hour as i32, world.meridiem);
+        text.0 = world_time.to_string();
+    };
 }
 
 fn reset_player_item_selected(

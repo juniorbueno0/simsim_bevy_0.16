@@ -69,5 +69,5 @@ fn main() {
 // implement a patroling system
 
 // bugs
-// all workers find the same coin not the closest one to their position
+// the workers get a coin assigned but not the closest worker get the coin 
 // house detection offset causes multiple employes to get the same coin 
