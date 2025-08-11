@@ -3,11 +3,6 @@ use bevy::prelude::*;
 
 use crate::{gameui::{ItemSelected, UiItemSlotButton, UiSlot}, mouse::{MyWorldCoords, PointingAtUi}, player::{ItemType, PlayerInventory}, worker::{WorkerBundle, WorkerCollectable, WorkerData}};
 
-// #[derive(Resource, PartialEq, Eq)]
-// pub struct Buildings {
-//    pub data: HashSet<((i32,i32), BuildingType)>
-// }
-
 #[derive(Resource, PartialEq, Eq)]
 pub struct Buildings {
    pub data: HashSet<(i32,i32)>
@@ -44,6 +39,7 @@ pub struct PreparedDirtData {
     pub item_type: ItemType,
     pub crop_type: CropType,
     pub growth_state: i32,
+    pub growth_active: bool,
     pub growth_complete: bool,
     pub growth_state_timer: Timer,
     pub worker_assigned_bool: bool,
@@ -64,7 +60,6 @@ impl Plugin for MyBuildingPlugin {
         app.insert_resource(Buildings{data:HashSet::new()});
 
         app.add_systems(Update, spawn_items);
-        app.add_systems(Update, log_buildings);
     }
 }
 
@@ -115,6 +110,7 @@ fn spawn_items(
                             item_type: ItemType::Dirt,
                             crop_type: CropType::Potato, // add none as default later
                             growth_state: 0,
+                            growth_active: false,
                             growth_state_timer: Timer::from_seconds(60., TimerMode::Once),
                             growth_complete: false,
                             worker_assigned_bool: false,
@@ -157,14 +153,6 @@ fn spawn_items(
                 ui_slot.0.amount -= 1;
                 spawn_entity(item.selected, cmm);
             }
-        }
-    }
-}
-
-fn log_buildings(input: Res<ButtonInput<KeyCode>>, buildings: Res<Buildings>) {
-    if input.just_pressed(KeyCode::KeyP) {
-        for b in &buildings.data {
-            println!("building: {:?}", b);
         }
     }
 }

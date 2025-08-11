@@ -111,7 +111,7 @@ fn ui_setup(mut commands: Commands) {
 
         children.spawn(
             Node {
-                width: Val::Percent(100.),
+                width: Val::Percent(120.),
                 height: Val::Percent(95.),
                 display: Display::Flex,
                 flex_direction: FlexDirection::Row,

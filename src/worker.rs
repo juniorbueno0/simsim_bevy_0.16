@@ -161,7 +161,7 @@ fn worker_assign_home(
     }
 }
 
-fn worker_life_cycle(
+fn worker_life_cycle( // optimize this later
     time: Res<Time>,
     day: Res<WorldSettings>,
     mut crops: Query<(&Transform, &mut PreparedDirtData, Entity), (With<PreparedDirtData>, Without<Working>)>,
@@ -183,11 +183,18 @@ fn worker_life_cycle(
                 (day.meridiem == Meridiem::AM && day.actual_hour >= 8.0) ||
                 (day.meridiem == Meridiem::PM && day.actual_hour < 9.0);
 
+            let crop_entity = crops.iter_mut().find(|c|c.2 == w.1.target_crop_entity.unwrap());
+
             if is_work_time {
                 let dir = w.0.translation - w.1.target_crop_pos.unwrap();
                 w.0.translation -= dir * time.delta_secs();
-                if dir.x < 1.0 && dir.y < 1. { w.1.target_crop_active = true; }else { w.1.target_crop_active = false; } // crop growth active
+                if dir.x < 1.0 && dir.y < 1. {
+                    crop_entity.unwrap().1.growth_active = true;
+                }else { 
+                    crop_entity.unwrap().1.growth_active = false;
+                }
             } else {
+                crop_entity.unwrap().1.growth_active = false;
                 let dir = w.0.translation - Vec3::new(w.1.house_pos.0 as f32,w.1.house_pos.1 as f32,2.);
                 w.0.translation -= dir * time.delta_secs();
             }
