@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 use bevy::prelude::*;
 
-use crate::{gameui::{ItemSelected, UiItemSlotButton, UiSlot}, mouse::{MyWorldCoords, PointingAtUi}, player::{ItemType, PlayerInventory}, worker::{WorkerBundle, WorkerCollectable, WorkerData}};
+use crate::{crop::{CropType, DirtBundle, PreparedDirtData}, gameui::{ItemSelected, UiItemSlotButton, UiSlot}, mouse::{MyWorldCoords, PointingAtUi}, player::{ItemType, PlayerInventory}, worker::{WorkerBundle, WorkerCollectable, WorkerData}};
 
 #[derive(Resource, PartialEq, Eq)]
 pub struct Buildings {
@@ -27,30 +27,6 @@ struct HouseBuildingBundle {
     tf: Transform,
     sprite: Sprite,
     data: HouseData,
-}
-
-#[derive(Debug, Component)]
-pub enum CropType {
-    Potato
-}
-
-#[derive(Debug, Component)]
-pub struct PreparedDirtData {
-    pub item_type: ItemType,
-    pub crop_type: CropType,
-    pub growth_state: i32,
-    pub growth_active: bool,
-    pub growth_complete: bool,
-    pub growth_state_timer: Timer,
-    pub worker_assigned_bool: bool,
-    pub worker_assigned_entity: Entity
-}
-
-#[derive(Bundle)]
-struct DirtBundle {
-    tf: Transform,
-    spr: Sprite,
-    data: PreparedDirtData
 }
 
 pub struct MyBuildingPlugin;
@@ -148,7 +124,7 @@ fn spawn_items(
             if building { buildings.data.insert((world_coords.0.x as i32, world_coords.0.y as i32)); }
         };
 
-        if let Some(stack) = inv.items.iter_mut().find(|i| (i.item != ItemType::None) && (i.total_amount >= 1) && (i.ui_entity == item.entity)) {
+        if let Some(stack) = inv.items.iter_mut().find(|i| (i.item != ItemType::None) && (i.total_amount >= 1) && (i.ui_entity == item.ui_entity)) {
             stack.total_amount -= 1;
             if let Some(mut ui_slot) = ui_buttons.iter_mut().find(|(slot,e)| (*e == stack.ui_entity) && slot.amount >= 1) {
                 ui_slot.0.amount -= 1;

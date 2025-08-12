@@ -1,10 +1,34 @@
 use bevy::prelude::*;
 
-use crate::buildings::PreparedDirtData;
+use crate::player::ItemType;
 
 // idea
 // spawn the prepared dirt 
 // select the type and then the timer start
+
+#[derive(Debug, Component)]
+pub enum CropType {
+    Potato
+}
+
+#[derive(Debug, Component)]
+pub struct PreparedDirtData {
+    pub item_type: ItemType,
+    pub crop_type: CropType,
+    pub growth_state: i32,
+    pub growth_active: bool,
+    pub growth_complete: bool,
+    pub growth_state_timer: Timer,
+    pub worker_assigned_bool: bool,
+    pub worker_assigned_entity: Entity
+}
+
+#[derive(Bundle)]
+pub struct DirtBundle {
+    pub tf: Transform,
+    pub spr: Sprite,
+    pub data: PreparedDirtData
+}
 
 pub struct MyCropPlugin;
 

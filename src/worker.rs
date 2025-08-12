@@ -1,8 +1,6 @@
-use std::option;
-
 use bevy::{math::NormedVectorSpace, platform::collections::HashSet, prelude::*};
 
-use crate::{buildings::{BuildingType, Buildings, HouseData, PreparedDirtData}, player::{CoinsSpawned, ItemType}, world::{Meridiem, WorldSettings}};
+use crate::{buildings::{BuildingType, HouseData}, crop::PreparedDirtData, player::{CoinsSpawned, ItemType}, world::{Meridiem, WorldSettings}};
 
 #[derive(Debug, Resource)]
 pub struct WorkerAmount { total: i32 }

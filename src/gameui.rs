@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use crate::{player::{ItemType, PlayerInventory, INVENTORYSIZE}, world::WorldSettings};
 
+const RGBINVSLOT: (f32,f32,f32) = (0.4,0.5,0.4);
 #[derive(Component)]
 struct UiButton;
 
@@ -14,7 +15,7 @@ pub struct UiWorldTime;
 #[derive(Resource, Debug)]
 pub struct ItemSelected {
     pub selected: ItemType,
-    pub entity: Entity
+    pub ui_entity: Entity
 }
 
 #[derive(Debug, Component)]
@@ -37,10 +38,11 @@ pub struct MyGameUiPlugin;
 
 impl Plugin for MyGameUiPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(ItemSelected { selected: ItemType::None, entity: Entity::from_raw(0) });
+        app.insert_resource(ItemSelected { selected: ItemType::None, ui_entity: Entity::from_raw(0) });
  
         app.add_systems(Startup, ui_setup);      
         app.add_systems(Update, (ui_slot_interactions, ui_load_items, ui_reset_slot, reset_player_item_selected));
+        app.add_systems(Update, (highlight_slot_selected, reset_selected_item));
         app.add_systems(Update, (ui_slot_text, ui_world_time_text));
     }
 }
@@ -49,7 +51,6 @@ fn ui_setup(mut commands: Commands) {
     let inventory_row_gap = 10.0;
     let rgb_topbar = (0.3,0.3,0.3);
     let rgb_inventory_bg = (0.5,0.6,0.5);
-    let rgb_inv_slot = (0.4,0.5,0.4);
 
     commands.spawn(
         Node { width: Val::Percent(100.), height: Val::Percent(100.),  display: Display::Flex, flex_direction: FlexDirection::Column, ..default() }, 
@@ -144,7 +145,7 @@ fn ui_setup(mut commands: Commands) {
                     }, BackgroundColor(Color::srgb(rgb_inventory_bg.0,rgb_inventory_bg.1,rgb_inventory_bg.2)))
                 ).with_children(|c| {
                     for _ in 0..INVENTORYSIZE {
-                        c.spawn(build_custom_button(ItemType::None,0,rgb_inv_slot));
+                        c.spawn(build_custom_button(ItemType::None,0,RGBINVSLOT));
                     }
                 });
             });
@@ -188,7 +189,7 @@ fn ui_slot_interactions(
 ) {
     for (int, uis, ent) in &button_interactions {
         if *int == Interaction::Pressed {
-            (selection.selected, selection.entity) = (uis.item, ent);
+            (selection.selected, selection.ui_entity) = (uis.item, ent);
 
             println!("{:?}, {:?}", uis, ent);
         }
@@ -241,14 +242,38 @@ fn ui_world_time_text(
     };
 }
 
+fn highlight_slot_selected(
+    item_selected: Res<ItemSelected>,
+    mut ui_slots: Query<(&mut BackgroundColor, Entity),With<UiItemSlotButton>>
+) {
+    for (mut bgc, entity) in &mut ui_slots {
+        if item_selected.ui_entity == entity {
+            bgc.0 = Color::srgb(0.7, 0.7, 0.7);
+        }else {
+            bgc.0 = Color::srgb(RGBINVSLOT.0,RGBINVSLOT.1,RGBINVSLOT.2);
+        }
+        println!("{:?}", bgc.0);
+    }
+}
+
 fn reset_player_item_selected(
     mut player_selected_item: ResMut<ItemSelected>,
     ui_slots: Query<(&UiSlot,Entity),With<UiItemSlotButton>>
 ) {
-    let entity = ui_slots.iter().find(|s|(s.1 == player_selected_item.entity));
+    let entity = ui_slots.iter().find(|s|(s.1 == player_selected_item.ui_entity));
 
     match entity {
         Option::Some(_) => {},
-        Option::None => { player_selected_item.selected = ItemType::None; player_selected_item.entity = Entity::from_raw(0); }
+        Option::None => { player_selected_item.selected = ItemType::None; player_selected_item.ui_entity = Entity::from_raw(0); }
+    }
+}
+
+fn reset_selected_item(
+    input_key: Res<ButtonInput<KeyCode>>,
+    input_mouse: Res<ButtonInput<MouseButton>>,
+    mut player_selected_item: ResMut<ItemSelected>
+) {
+    if input_mouse.just_pressed(MouseButton::Right) || input_key.just_pressed(KeyCode::Escape) {
+        player_selected_item.selected = ItemType::None; player_selected_item.ui_entity = Entity::from_raw(0); 
     }
 }
