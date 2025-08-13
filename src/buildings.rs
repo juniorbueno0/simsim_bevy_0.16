@@ -4,8 +4,13 @@ use bevy::prelude::*;
 use crate::{crop::{CropType, DirtBundle, PreparedDirtData}, gameui::{ItemSelected, UiItemSlotButton, UiSlot}, mouse::{MyWorldCoords, PointingAtUi}, player::{ItemType, PlayerInventory}, worker::{WorkerBundle, WorkerCollectable, WorkerData}};
 
 #[derive(Resource, PartialEq, Eq)]
-pub struct Buildings {
+pub struct BuildingCoords {
    pub data: HashSet<(i32,i32)>
+}
+
+#[derive(Resource, PartialEq, Eq)]
+pub struct BuildingTuple {
+   pub data: HashSet<((i32,i32), ItemType)>
 }
 
 #[derive(Debug, Component, PartialEq, Eq, Hash)]
@@ -33,7 +38,8 @@ pub struct MyBuildingPlugin;
 
 impl Plugin for MyBuildingPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(Buildings{data:HashSet::new()});
+        app.insert_resource(BuildingCoords { data:HashSet::new() });
+        app.insert_resource(BuildingTuple { data:HashSet::new() });
 
         app.add_systems(Update, spawn_items);
     }
@@ -44,15 +50,16 @@ fn spawn_items(
     item: Res<ItemSelected>,
     pointing_at: Res<PointingAtUi>,
     mut inv: ResMut<PlayerInventory>,
-    mut buildings: ResMut<Buildings>,
+    mut building_coords: ResMut<BuildingCoords>,
+    mut buildings_tuple: ResMut<BuildingTuple>,
     world_coords: Res<MyWorldCoords>,
     input: Res<ButtonInput<MouseButton>>,
     mut ui_buttons: Query<(&mut UiSlot, Entity), With<UiItemSlotButton>>
 ) {
-    if input.just_pressed(MouseButton::Left) && item.selected != ItemType::None && pointing_at.can_place && !buildings.data.contains(&((world_coords.0.x as i32, world_coords.0.y as i32))) {
+    if input.just_pressed(MouseButton::Left) && item.selected != ItemType::None && pointing_at.can_place && !building_coords.data.contains(&((world_coords.0.x as i32, world_coords.0.y as i32))) {
 
         let mut spawn_entity = |item_type: ItemType, mut cmm: Commands| {
-            let building = match item_type {
+            let spawned = match item_type {
                 ItemType::Coin => {
                     cmm.spawn((
                         Sprite {
@@ -64,7 +71,7 @@ fn spawn_items(
                         WorkerCollectable,
                         ItemType::Coin
                     ));
-                    true
+                    (true, ItemType::Coin)
                 },
                 ItemType::House => {
                     cmm.spawn(HouseBuildingBundle {
@@ -76,7 +83,7 @@ fn spawn_items(
                             max_capacity: 2
                         }
                     });
-                    true
+                    (true, ItemType::House)
                 },
                 ItemType::Dirt=> {
                     cmm.spawn(DirtBundle {
@@ -85,6 +92,7 @@ fn spawn_items(
                         data: PreparedDirtData {
                             item_type: ItemType::Dirt,
                             crop_type: CropType::Potato, // add none as default later
+                            crop_type_selected: false, // player alredy selected one type to grow
                             growth_state: 0,
                             growth_active: false,
                             growth_state_timer: Timer::from_seconds(60., TimerMode::Once),
@@ -93,7 +101,7 @@ fn spawn_items(
                             worker_assigned_entity: Entity::from_raw(0)
                         }
                     });
-                    true
+                    (true, ItemType::Dirt)
                 },
                 ItemType::Worker => {
                     cmm.spawn(WorkerBundle {
@@ -116,12 +124,15 @@ fn spawn_items(
                             target_crop_pos: Option::None
                         }
                     });
-                    false
+                    (false, ItemType::None)
                 }
-                _=> { false }
+                _=> { (false, ItemType::None) }
             };
 
-            if building { buildings.data.insert((world_coords.0.x as i32, world_coords.0.y as i32)); }
+            if spawned.0 { 
+                building_coords.data.insert((world_coords.0.x as i32, world_coords.0.y as i32));
+                buildings_tuple.data.insert(((world_coords.0.x as i32, world_coords.0.y as i32), spawned.1));
+            }
         };
 
         if let Some(stack) = inv.items.iter_mut().find(|i| (i.item != ItemType::None) && (i.total_amount >= 1) && (i.ui_entity == item.ui_entity)) {

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{player::{ItemType, PlayerInventory, INVENTORYSIZE}, world::WorldSettings};
+use crate::{buildings::{BuildingCoords, BuildingTuple}, mouse::MyWorldCoords, player::{ItemType, PlayerInventory, INVENTORYSIZE}, world::WorldSettings};
 
 const RGBINVSLOT: (f32,f32,f32) = (0.4,0.5,0.4);
 #[derive(Component)]
@@ -16,6 +16,14 @@ pub struct UiWorldTime;
 pub struct ItemSelected {
     pub selected: ItemType,
     pub ui_entity: Entity
+}
+
+#[derive(Resource, Debug)]
+pub struct DynamicUi {
+    selected: ItemType,
+    parent_ui: Entity,
+    button_count: i32,
+    active: bool
 }
 
 #[derive(Debug, Component)]
@@ -39,11 +47,13 @@ pub struct MyGameUiPlugin;
 impl Plugin for MyGameUiPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(ItemSelected { selected: ItemType::None, ui_entity: Entity::from_raw(0) });
- 
-        app.add_systems(Startup, ui_setup);      
+        app.insert_resource(DynamicUi { selected: ItemType::None, parent_ui: Entity::from_raw(0), button_count: 0, active: false });
+        
+        app.add_systems(Startup, ui_setup);     
         app.add_systems(Update, (ui_slot_interactions, ui_load_items, ui_reset_slot, reset_player_item_selected));
         app.add_systems(Update, (highlight_slot_selected, reset_selected_item));
         app.add_systems(Update, (ui_slot_text, ui_world_time_text));
+        app.add_systems(Update, dynamic_ui_selection);
     }
 }
 
@@ -252,7 +262,6 @@ fn highlight_slot_selected(
         }else {
             bgc.0 = Color::srgb(RGBINVSLOT.0,RGBINVSLOT.1,RGBINVSLOT.2);
         }
-        println!("{:?}", bgc.0);
     }
 }
 
@@ -269,11 +278,45 @@ fn reset_player_item_selected(
 }
 
 fn reset_selected_item(
+    mut dyn_ui: ResMut<DynamicUi>,
     input_key: Res<ButtonInput<KeyCode>>,
     input_mouse: Res<ButtonInput<MouseButton>>,
     mut player_selected_item: ResMut<ItemSelected>
 ) {
     if input_mouse.just_pressed(MouseButton::Right) || input_key.just_pressed(KeyCode::Escape) {
         player_selected_item.selected = ItemType::None; player_selected_item.ui_entity = Entity::from_raw(0); 
+        dyn_ui.selected = ItemType::None; dyn_ui.active = false; 
     }
+}
+
+// DYNAMIC UI DISPLAY
+
+fn dynamic_ui_selection(
+    mut dyn_ui: ResMut<DynamicUi>,
+    item_selected: Res<ItemSelected>,
+    mouse_position: Res<MyWorldCoords>,
+    buildings_tuple: Res<BuildingTuple>,
+    building_coords: Res<BuildingCoords>,
+    input: Res<ButtonInput<MouseButton>>,
+) {
+    if input.just_pressed(MouseButton::Left) && item_selected.selected == ItemType::None && 
+        building_coords.data.contains(&(mouse_position.0.x as i32, mouse_position.0.y as i32)) {
+        
+        if let Some(building) = buildings_tuple.data.iter().find(|bt|bt.0 == (mouse_position.0.x as i32, mouse_position.0.y as i32)) {
+            
+            let menu_selected = match building.1 {
+                ItemType::Dirt => { (ItemType::Dirt, true) }
+                _ => { (ItemType::None, false) }
+            };
+
+            (dyn_ui.selected, dyn_ui.active) = menu_selected;
+            println!("{:?}", dyn_ui);
+        }
+    }
+}
+
+fn display_ui_selected(
+    mut dyn_ui: ResMut<DynamicUi>,
+) {
+
 }

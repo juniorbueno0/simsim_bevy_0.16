@@ -71,3 +71,4 @@ fn main() {
 // bugs
 // the workers get a coin assigned but not the closest worker get the coin 
 // house detection offset causes multiple employes to get the same coin 
+// changing the window resolution always broke the where you can place items

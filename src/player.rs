@@ -1,8 +1,6 @@
 use bevy::{platform::collections::HashSet, prelude::*};
 
-use crate::gameui::{ItemSelected, UiItemSlotButton, UiSlot};
-use crate::mouse::{MyWorldCoords, PointingAtUi};
-use crate::worker::WorkerCollectable;
+use crate::gameui::ItemSelected;
 
 pub const INVENTORYSIZE: i32 = 6;
 const MAXSTACKSIZE: i32 = 999;
@@ -12,7 +10,7 @@ pub enum Tool {
     Shovel
 }
 
-#[derive(Debug, Component, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, Component, PartialEq, Eq, Clone, Copy, Hash)]
 pub enum ItemType {
     None,
     Coin,

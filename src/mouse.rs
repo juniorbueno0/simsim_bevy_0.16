@@ -55,6 +55,32 @@ fn setup(mut commands:Commands, ass:Res<AssetServer>) {
 }
 
 // convert the mouse coords to window coords
+// fn cursor_to_world_position(
+//     mut mycoords: ResMut<MyWorldCoords>,
+//     mut cursor_events: EventReader<CursorMoved>,
+//     q_window: Query<&Window, With<PrimaryWindow>>,
+//     q_camera: Query<(&Camera, &GlobalTransform), With<MainCamera>>,
+// ) {
+//     let Some(_) = cursor_events.read().last() else { return };
+
+//     // assuming there is exactly one main camera entity, so Query::single() is OK
+//     let (camera, camera_transform) = q_camera.single().unwrap();
+//     let window = q_window.single().unwrap();
+
+//     // then, ask bevy to convert into world coordinates, and truncate to discard Z
+//     if let Some(world_position) = window.cursor_position()
+//         .and_then(|cursor| Some(camera.viewport_to_world(camera_transform, cursor)))
+//         .map(|ray| ray.unwrap().origin.truncate())
+//     {
+//         mycoords.0 = world_position + Vec2::new(0.5, 0.5);
+//         // to int 
+//         let x_value: i32 = mycoords.0.x as i32;
+//         let y_value: i32 = mycoords.0.y as i32;
+//         // to f32 
+//         mycoords.0 = Vec2::new(x_value as f32, y_value as f32);
+//     }
+// }
+
 fn cursor_to_world_position(
     mut mycoords: ResMut<MyWorldCoords>,
     mut cursor_events: EventReader<CursorMoved>,
@@ -63,20 +89,17 @@ fn cursor_to_world_position(
 ) {
     let Some(_) = cursor_events.read().last() else { return };
 
-    // assuming there is exactly one main camera entity, so Query::single() is OK
     let (camera, camera_transform) = q_camera.single().unwrap();
     let window = q_window.single().unwrap();
 
-    // then, ask bevy to convert into world coordinates, and truncate to discard Z
     if let Some(world_position) = window.cursor_position()
         .and_then(|cursor| Some(camera.viewport_to_world(camera_transform, cursor)))
         .map(|ray| ray.unwrap().origin.truncate())
     {
-        mycoords.0 = world_position + Vec2::new(0.5, 0.5);
-        // to int 
-        let x_value: i32 = mycoords.0.x as i32;
-        let y_value: i32 = mycoords.0.y as i32;
-        // to f32 
+        // Round to nearest integer instead of truncating
+        let x_value = world_position.x.round() as i32;
+        let y_value = world_position.y.round() as i32;
+        
         mycoords.0 = Vec2::new(x_value as f32, y_value as f32);
     }
 }

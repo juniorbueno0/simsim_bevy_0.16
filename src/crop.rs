@@ -8,6 +8,7 @@ use crate::player::ItemType;
 
 #[derive(Debug, Component)]
 pub enum CropType {
+    None,
     Potato
 }
 
@@ -15,6 +16,7 @@ pub enum CropType {
 pub struct PreparedDirtData {
     pub item_type: ItemType,
     pub crop_type: CropType,
+    pub crop_type_selected: bool,
     pub growth_state: i32,
     pub growth_active: bool,
     pub growth_complete: bool,
@@ -45,11 +47,15 @@ fn crop_growth_manager(
     mut crops: Query<&mut PreparedDirtData, With<PreparedDirtData>>
 ) {
     for mut crop in &mut crops {
-        if crop.growth_active {
+        if crop.growth_active && crop.crop_type_selected {
             crop.growth_state_timer.tick(time.delta());
             if crop.growth_state_timer.just_finished() { crop.growth_state += 1; }
         }
     }
+}
+
+fn crop_image_update() {
+    
 }
 
 fn log_crop_data(
