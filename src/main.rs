@@ -44,31 +44,3 @@ fn main() {
     
     app.run();
 }
-
-// workers
-// search for a coin
-// if have a coin they go to a house
-// spawn and patrol specific biome
-// workers leave their houses between working hours then they go back to rest
-
-// player
-// can drop a coin
-// can place houses
-
-// house
-// gives the town more npc spaces
-
-// player_inventory -> ui_backpack -> item_slected -> grid 
-
-// item amount manage
-// player inventory / ui_slot get decreased when spawned
-// player inventory gets removed at player.rs
-// ui buttons are reseted to none at gameui.rs
-
-// PENDING SYSTEMS
-// implement a patroling system
-
-// bugs
-// the workers get a coin assigned but not the closest worker get the coin 
-// house detection offset causes multiple employes to get the same coin 
-// changing the window resolution always broke the where you can place items
