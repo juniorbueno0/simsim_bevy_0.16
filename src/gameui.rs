@@ -5,7 +5,7 @@ use crate::{buildings::{BuildingCoords, BuildingTuple, HasDynamicMenu}, crop::Pr
 const RGBINVSLOT: (f32,f32,f32) = (0.4,0.5,0.4);
 
 #[derive(Debug, Component)]
-enum DynamicButtonsIds {
+enum DynamicButtonId {
     ButtonOne,
     ButtonTwo,
     ButtonThree,
@@ -13,14 +13,6 @@ enum DynamicButtonsIds {
     ButtonFive,
     ButtonSix
 }
-
-// const DYNAMICBUTTONIDS: [DynamicButtonsIds; 5] = [
-//     DynamicButtonsIds::ButtonOne,
-//     DynamicButtonsIds::ButtonTwo,
-//     DynamicButtonsIds::ButtonThree,
-//     DynamicButtonsIds::ButtonFour,
-//     DynamicButtonsIds::ButtonFive
-// ];
 
 enum DynamicOption {
     Potato,
@@ -427,13 +419,13 @@ fn display_dyn_ui_selected(
                                 BackgroundColor(Color::srgb(0.26,0.26,0.26)),
                                 Button,
                                 match i {
-                                    0 => { DynamicButtonsIds::ButtonOne },
-                                    1 => { DynamicButtonsIds::ButtonTwo },
-                                    2 => { DynamicButtonsIds::ButtonThree },
-                                    3 => { DynamicButtonsIds::ButtonFour },
-                                    4 => { DynamicButtonsIds::ButtonFive },
-                                    5 => { DynamicButtonsIds::ButtonSix },
-                                    _ => { DynamicButtonsIds::ButtonOne }
+                                    0 => { DynamicButtonId::ButtonOne },
+                                    1 => { DynamicButtonId::ButtonTwo },
+                                    2 => { DynamicButtonId::ButtonThree },
+                                    3 => { DynamicButtonId::ButtonFour },
+                                    4 => { DynamicButtonId::ButtonFive },
+                                    5 => { DynamicButtonId::ButtonSix },
+                                    _ => { DynamicButtonId::ButtonOne }
                                 }
                             ));
                         }
@@ -452,7 +444,7 @@ fn dynamic_menu_actions( // rewrite pending
     dyn_ui: Res<DynamicUi>,
     input: Res<ButtonInput<MouseButton>>,
     mut crops: Query<(&mut PreparedDirtData, Entity), With<PreparedDirtData>>,
-    dyn_button: Query<(&Interaction,&DynamicButtonsIds), (With<DynamicButtonsIds>, Without<UiItemSlotButton>)>
+    dyn_button: Query<(&Interaction,&DynamicButtonId), (With<DynamicButtonId>, Without<UiItemSlotButton>)>
 ) {
     if input.just_pressed(MouseButton::Left) {
         match dyn_ui.selected {
@@ -462,12 +454,12 @@ fn dynamic_menu_actions( // rewrite pending
                         Interaction::Pressed => {
                             println!("presed option {:?}", id);
                             match id {
-                                DynamicButtonsIds::ButtonOne => {
+                                DynamicButtonId::ButtonOne => {
                                     if let Some(mut crop) = crops.iter_mut().find(|c|c.1 == dyn_ui.world_entity) {
                                         crop.0.crop_type_selected = true;
                                     };
                                 },
-                                DynamicButtonsIds::ButtonTwo => {},
+                                DynamicButtonId::ButtonTwo => {},
                                 _ => {}           
                             }
                         },
