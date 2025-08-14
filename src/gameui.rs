@@ -307,6 +307,7 @@ fn reset_player_item_selected(
 }
 
 fn reset_selected_item(
+    mut cmm: Commands,
     mut dyn_ui: ResMut<DynamicUi>,
     input_key: Res<ButtonInput<KeyCode>>,
     input_mouse: Res<ButtonInput<MouseButton>>,
@@ -314,7 +315,12 @@ fn reset_selected_item(
 ) {
     if input_mouse.just_pressed(MouseButton::Right) || input_key.just_pressed(KeyCode::Escape) {
         player_selected_item.selected = ItemType::None; player_selected_item.ui_entity = Entity::from_raw(0); 
-        dyn_ui.selected = ItemType::None; dyn_ui.open = false; 
+        
+        if dyn_ui.selected != ItemType::None {
+            dyn_ui.open = false; // no needed!
+            dyn_ui.selected = ItemType::None;
+            cmm.entity(dyn_ui.actual_ui_entity).despawn();
+        }
     }
 }
 
@@ -355,7 +361,7 @@ fn display_dyn_ui_selected(
         match dyn_ui.selected {
             ItemType::Dirt => {
                 cmm.entity(dyn_ui.parent_ui_entity).with_children(|dyn_menu| {
-                    dyn_menu.spawn((
+                    dyn_ui.actual_ui_entity = dyn_menu.spawn((
                         Node {
                             width: Val::Px(BUTTON_SLOT_SIZE * dyn_ui.button_count as f32),
                             height: Val::Px(60.),
@@ -378,7 +384,7 @@ fn display_dyn_ui_selected(
                                 }, BackgroundColor(Color::srgb(0.26,0.26,0.26))
                             ));
                         }
-                    });
+                    }).id();
                 });
             },
             _ => {}
