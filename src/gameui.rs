@@ -28,9 +28,6 @@ const DYNAMICMENUOPTIONS: [DynamicMenuOptions; 1] = [
     DynamicMenuOptions { building: ItemType::Dirt, action: &[DynamicOption::Potato, DynamicOption::Close] }
 ];
 
-// #[derive(Component)]
-// struct UiButton;
-
 #[derive(Component)]
 pub struct UiItemSlotButton;
 
@@ -457,6 +454,7 @@ fn dynamic_menu_actions( // rewrite pending
                                 DynamicButtonId::ButtonOne => {
                                     if let Some(mut crop) = crops.iter_mut().find(|c|c.1 == dyn_ui.world_entity) {
                                         crop.0.crop_type_selected = true;
+                                        println!(" changed to true ");
                                     };
                                 },
                                 DynamicButtonId::ButtonTwo => {},

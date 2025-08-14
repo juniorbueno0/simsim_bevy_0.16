@@ -48,15 +48,10 @@ fn crop_growth_manager(
 ) {
     for mut crop in &mut crops {
         if crop.growth_active && crop.crop_type_selected {
-            println!("started");
             crop.growth_state_timer.tick(time.delta());
             if crop.growth_state_timer.just_finished() { crop.growth_state += 1; }
         }
     }
-}
-
-fn crop_image_update() {
-
 }
 
 fn log_crop_data(

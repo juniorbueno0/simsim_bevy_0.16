@@ -42,7 +42,7 @@ fn day_timer_tick(time: Res<Time>, mut day: ResMut<WorldSettings>) {
                 Meridiem::PM => { Meridiem::AM }
             }
         }
-        println!("{:?} {:?}", day.actual_hour, day.meridiem);
+        // println!("{:?} {:?}", day.actual_hour, day.meridiem);
     }
 }
 
