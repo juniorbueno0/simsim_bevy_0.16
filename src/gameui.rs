@@ -54,7 +54,7 @@ impl Plugin for MyGameUiPlugin {
         app.add_systems(Update, (ui_slot_interactions, ui_load_items, ui_reset_slot, reset_player_item_selected));
         app.add_systems(Update, (highlight_slot_selected, reset_selected_item));
         app.add_systems(Update, (ui_slot_text, ui_world_time_text));
-        app.add_systems(Update, (dynamic_ui_selection, display_ui_selected));
+        app.add_systems(Update, (dyn_ui_selection, display_dyn_ui_selected));
     }
 }
 
@@ -67,15 +67,15 @@ fn ui_setup(mut commands: Commands, mut dyn_ui: ResMut<DynamicUi>) {
         Node { width: Val::Percent(100.), height: Val::Percent(100.),  display: Display::Flex, flex_direction: FlexDirection::Column, ..default() }, 
     ).with_children(|children: &mut bevy::ecs::relationship::RelatedSpawnerCommands<'_, ChildOf>| {
        // TOP
-       children.spawn(( 
+       children.spawn( 
             Node {
                 width: Val::Percent(100.),
                 height: Val::Percent(5.),
                 display: Display::Flex,
                 flex_direction: FlexDirection::Row,
                 ..default()
-            }, BackgroundColor(Color::srgb(0.4,0.4, 0.5))
-        )).with_children(|top| {
+            }
+        ).with_children(|top| {
             top.spawn((
                 Node {
                     width: Val::Percent(100.),
@@ -183,18 +183,20 @@ fn ui_setup(mut commands: Commands, mut dyn_ui: ResMut<DynamicUi>) {
                 height: Val::Percent(10.),
                 display: Display::Flex,
                 flex_direction: FlexDirection::Row,
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
                 ..default()
             }
         ).with_children(|bottom| {
             // DYN UI PARENT
             dyn_ui.parent_ui_entity = bottom.spawn(
                 Node {
-                    width: Val::Px(320.),
-                    height: Val::Px(110.),
+                    width: Val::Px(300.),
+                    height: Val::Px(60.),
                     display: Display::Flex,
                     flex_direction: FlexDirection::Row,
                     ..default()
-                }  
+                }
             ).id();
         });
     });
@@ -318,7 +320,7 @@ fn reset_selected_item(
 
 // DYNAMIC UI DISPLAY
 
-fn dynamic_ui_selection(
+fn dyn_ui_selection(
     mut dyn_ui: ResMut<DynamicUi>,
     item_selected: Res<ItemSelected>,
     mouse_position: Res<MyWorldCoords>,
@@ -332,35 +334,52 @@ fn dynamic_ui_selection(
         if let Some(building) = buildings_tuple.data.iter().find(|bt|bt.0 == (mouse_position.0.x as i32, mouse_position.0.y as i32)) {
             
             let menu_selected = match building.1 {
-                ItemType::Dirt => { (ItemType::Dirt, true) }
-                _ => { (ItemType::None, false) }
+                ItemType::Dirt => { (ItemType::Dirt, true, 2) }
+                _ => { (ItemType::None, false, 0) }
             };
 
-            (dyn_ui.selected, dyn_ui.open) = menu_selected;
+            (dyn_ui.selected, dyn_ui.open, dyn_ui.button_count) = menu_selected;
             println!("{:?}", dyn_ui);
         }
     }
 }
 
-fn display_ui_selected(
+fn display_dyn_ui_selected(
     mut cmm: Commands,
     mut dyn_ui: ResMut<DynamicUi>,
 ) {
+    const INVENTORY_ROW_GAP: f32 = 10.0;
+    const BUTTON_SLOT_SIZE: f32 = 75.0;
+
     if dyn_ui.open {
         match dyn_ui.selected {
             ItemType::Dirt => {
                 cmm.entity(dyn_ui.parent_ui_entity).with_children(|dyn_menu| {
-                    dyn_menu.spawn((Node {
-                        width: Val::Px(240.),
-                        height: Val::Px(120.),
-                        display: Display::Flex,
-                        flex_direction: FlexDirection::Row,
-                        justify_content: JustifyContent::Center,
-                        align_items: AlignItems::Center,
-                        ..default()
-                    }, BackgroundColor(Color::srgb(0.6,0.6,0.6))));
+                    dyn_menu.spawn((
+                        Node {
+                            width: Val::Px(BUTTON_SLOT_SIZE * dyn_ui.button_count as f32),
+                            height: Val::Px(60.),
+                            display: Display::Flex,
+                            column_gap: Val::Px(INVENTORY_ROW_GAP),
+                            flex_direction: FlexDirection::Row,
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            ..default()
+                        }, BackgroundColor(Color::srgb(0.3,0.3,0.3))
+                    )).with_children(|slots| {
+                        for _ in 0..dyn_ui.button_count {
+                            slots.spawn((
+                                Node {
+                                    width: Val::Px(40.),
+                                    height: Val::Px(40.),
+                                    display: Display::Flex,
+                                    flex_direction: FlexDirection::Row,
+                                    ..default()
+                                }, BackgroundColor(Color::srgb(0.26,0.26,0.26))
+                            ));
+                        }
+                    });
                 });
-                println!("spawned");
             },
             _ => {}
         }
