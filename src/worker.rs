@@ -187,7 +187,7 @@ fn worker_life_cycle( // optimize this later
             if is_work_time {
                 let dir = (w.0.translation - w.1.target_crop_pos.unwrap()).normalize_or_zero();
                 w.0.translation -= dir * w.1.worker_speed * time.delta_secs();
-                if dir.x < 1.0 && dir.y < 1. {
+                if dir.x < 1.0 && dir.y < 1.0 {
                     crop_entity.unwrap().1.growth_active = true;
                 }else { 
                     crop_entity.unwrap().1.growth_active = false;

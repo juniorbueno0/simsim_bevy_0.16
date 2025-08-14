@@ -2,6 +2,8 @@ use std::collections::HashSet;
 use bevy::prelude::*;
 
 use crate::{crop::{CropType, DirtBundle, PreparedDirtData}, gameui::{ItemSelected, UiItemSlotButton, UiSlot}, mouse::{MyWorldCoords, PointingAtUi}, player::{ItemType, PlayerInventory}, worker::{WorkerBundle, WorkerCollectable, WorkerData}};
+#[derive(Debug, Component)]
+pub struct HasDynamicMenu;
 
 #[derive(Resource, PartialEq, Eq)]
 pub struct BuildingCoords {
@@ -76,7 +78,7 @@ fn spawn_items(
                 ItemType::House => {
                     cmm.spawn(HouseBuildingBundle {
                         sprite: Sprite { color:Color::srgb(0.9, 0.9, 0.8), custom_size: Some(vec2(1., 1.)), ..default() },
-                        tf: Transform::from_xyz(world_coords.0.x, world_coords.0.y, 2.),
+                        tf: Transform::from_xyz(world_coords.0.x, world_coords.0.y, 1.),
                         data: HouseData {
                             building_type: BuildingType::House,
                             assigned_workers: HashSet::new(),
@@ -86,9 +88,9 @@ fn spawn_items(
                     (true, ItemType::House)
                 },
                 ItemType::Dirt=> {
-                    cmm.spawn(DirtBundle {
+                    cmm.spawn((DirtBundle {
                         spr: Sprite { color:Color::srgb(0.7, 0.5, 0.0), custom_size: Some(vec2(1., 1.)), ..default() },
-                        tf: Transform::from_xyz(world_coords.0.x, world_coords.0.y, 2.),
+                        tf: Transform::from_xyz(world_coords.0.x, world_coords.0.y, 1.),
                         data: PreparedDirtData {
                             item_type: ItemType::Dirt,
                             crop_type: CropType::Potato, // add none as default later
@@ -100,7 +102,7 @@ fn spawn_items(
                             worker_assigned_bool: false,
                             worker_assigned_entity: Entity::from_raw(0)
                         }
-                    });
+                    }, HasDynamicMenu));
                     (true, ItemType::Dirt)
                 },
                 ItemType::Worker => {

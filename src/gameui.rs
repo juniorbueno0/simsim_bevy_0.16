@@ -1,10 +1,43 @@
 use bevy::prelude::*;
 
-use crate::{buildings::{BuildingCoords, BuildingTuple}, mouse::MyWorldCoords, player::{ItemType, PlayerInventory, INVENTORYSIZE}, world::WorldSettings};
+use crate::{buildings::{BuildingCoords, BuildingTuple, HasDynamicMenu}, crop::PreparedDirtData, mouse::MyWorldCoords, player::{ItemType, PlayerInventory, INVENTORYSIZE}, world::WorldSettings};
 
 const RGBINVSLOT: (f32,f32,f32) = (0.4,0.5,0.4);
-#[derive(Component)]
-struct UiButton;
+
+#[derive(Debug, Component)]
+enum DynamicButtonsIds {
+    ButtonOne,
+    ButtonTwo,
+    ButtonThree,
+    ButtonFour,
+    ButtonFive,
+    ButtonSix
+}
+
+// const DYNAMICBUTTONIDS: [DynamicButtonsIds; 5] = [
+//     DynamicButtonsIds::ButtonOne,
+//     DynamicButtonsIds::ButtonTwo,
+//     DynamicButtonsIds::ButtonThree,
+//     DynamicButtonsIds::ButtonFour,
+//     DynamicButtonsIds::ButtonFive
+// ];
+
+enum DynamicOption {
+    Potato,
+    Close
+}
+
+struct DynamicMenuOptions {
+    building: ItemType,
+    action: &'static[DynamicOption]
+}
+
+const DYNAMICMENUOPTIONS: [DynamicMenuOptions; 1] = [
+    DynamicMenuOptions { building: ItemType::Dirt, action: &[DynamicOption::Potato, DynamicOption::Close] }
+];
+
+// #[derive(Component)]
+// struct UiButton;
 
 #[derive(Component)]
 pub struct UiItemSlotButton;
@@ -21,6 +54,7 @@ pub struct ItemSelected {
 #[derive(Resource, Debug)]
 pub struct DynamicUi {
     selected: ItemType,
+    world_entity: Entity,
     parent_ui_entity: Entity,
     actual_ui_entity: Entity,
     button_count: i32,
@@ -48,13 +82,13 @@ pub struct MyGameUiPlugin;
 impl Plugin for MyGameUiPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(ItemSelected { selected: ItemType::None, ui_entity: Entity::from_raw(0) });
-        app.insert_resource(DynamicUi { selected: ItemType::None, parent_ui_entity: Entity::from_raw(0), actual_ui_entity: Entity::from_raw(0), button_count: 0, open: false });
+        app.insert_resource(DynamicUi { selected: ItemType::None, world_entity: Entity::from_raw(0), parent_ui_entity: Entity::from_raw(0), actual_ui_entity: Entity::from_raw(0), button_count: 0, open: false });
         
         app.add_systems(Startup, ui_setup);     
         app.add_systems(Update, (ui_slot_interactions, ui_load_items, ui_reset_slot, reset_player_item_selected));
         app.add_systems(Update, (highlight_slot_selected, reset_selected_item));
         app.add_systems(Update, (ui_slot_text, ui_world_time_text));
-        app.add_systems(Update, (dyn_ui_selection, display_dyn_ui_selected));
+        app.add_systems(Update, (dyn_ui_selection, display_dyn_ui_selected, dynamic_menu_actions));
     }
 }
 
@@ -324,7 +358,7 @@ fn reset_selected_item(
     }
 }
 
-// DYNAMIC UI DISPLAY
+// DYNAMIC UI
 
 fn dyn_ui_selection(
     mut dyn_ui: ResMut<DynamicUi>,
@@ -333,10 +367,11 @@ fn dyn_ui_selection(
     buildings_tuple: Res<BuildingTuple>,
     building_coords: Res<BuildingCoords>,
     input: Res<ButtonInput<MouseButton>>,
+    world_entities: Query<(&Transform, Entity), With<HasDynamicMenu>>
 ) {
     if input.just_pressed(MouseButton::Left) && item_selected.selected == ItemType::None && 
         building_coords.data.contains(&(mouse_position.0.x as i32, mouse_position.0.y as i32)) {
-        
+
         if let Some(building) = buildings_tuple.data.iter().find(|bt|bt.0 == (mouse_position.0.x as i32, mouse_position.0.y as i32)) {
             
             let menu_selected = match building.1 {
@@ -345,6 +380,12 @@ fn dyn_ui_selection(
             };
 
             (dyn_ui.selected, dyn_ui.open, dyn_ui.button_count) = menu_selected;
+
+            // search the entity of the building and store it to later activate or change the building from the dyn menu 
+            if let Some(ent) = world_entities.iter().find(|we| we.0.translation.x == mouse_position.0.x && we.0.translation.y == mouse_position.0.y) {
+                dyn_ui.world_entity = ent.1;
+            };
+
             println!("{:?}", dyn_ui);
         }
     }
@@ -373,7 +414,8 @@ fn display_dyn_ui_selected(
                             ..default()
                         }, BackgroundColor(Color::srgb(0.3,0.3,0.3))
                     )).with_children(|slots| {
-                        for _ in 0..dyn_ui.button_count {
+                        for i in 0..dyn_ui.button_count {
+                            println!("{:?}", i);
                             slots.spawn((
                                 Node {
                                     width: Val::Px(40.),
@@ -381,7 +423,18 @@ fn display_dyn_ui_selected(
                                     display: Display::Flex,
                                     flex_direction: FlexDirection::Row,
                                     ..default()
-                                }, BackgroundColor(Color::srgb(0.26,0.26,0.26))
+                                },
+                                BackgroundColor(Color::srgb(0.26,0.26,0.26)),
+                                Button,
+                                match i {
+                                    0 => { DynamicButtonsIds::ButtonOne },
+                                    1 => { DynamicButtonsIds::ButtonTwo },
+                                    2 => { DynamicButtonsIds::ButtonThree },
+                                    3 => { DynamicButtonsIds::ButtonFour },
+                                    4 => { DynamicButtonsIds::ButtonFive },
+                                    5 => { DynamicButtonsIds::ButtonSix },
+                                    _ => { DynamicButtonsIds::ButtonOne }
+                                }
                             ));
                         }
                     }).id();
@@ -391,5 +444,38 @@ fn display_dyn_ui_selected(
         }
 
         dyn_ui.open = false;
+    }
+}
+
+// actions of the actual dynamic menu displayed
+fn dynamic_menu_actions( // rewrite pending
+    dyn_ui: Res<DynamicUi>,
+    input: Res<ButtonInput<MouseButton>>,
+    mut crops: Query<(&mut PreparedDirtData, Entity), With<PreparedDirtData>>,
+    dyn_button: Query<(&Interaction,&DynamicButtonsIds), (With<DynamicButtonsIds>, Without<UiItemSlotButton>)>
+) {
+    if input.just_pressed(MouseButton::Left) {
+        match dyn_ui.selected {
+            ItemType::Dirt => {
+                for (interaction, id) in &dyn_button {
+                    match interaction {
+                        Interaction::Pressed => {
+                            println!("presed option {:?}", id);
+                            match id {
+                                DynamicButtonsIds::ButtonOne => {
+                                    if let Some(mut crop) = crops.iter_mut().find(|c|c.1 == dyn_ui.world_entity) {
+                                        crop.0.crop_type_selected = true;
+                                    };
+                                },
+                                DynamicButtonsIds::ButtonTwo => {},
+                                _ => {}           
+                            }
+                        },
+                        _ => {  }
+                    }
+                }
+            }
+            _ => {  }
+        }
     }
 }
