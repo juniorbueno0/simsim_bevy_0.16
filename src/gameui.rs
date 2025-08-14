@@ -350,6 +350,7 @@ fn reset_selected_item(
 // DYNAMIC UI
 
 fn dyn_ui_selection(
+    mut cmm: Commands,
     mut dyn_ui: ResMut<DynamicUi>,
     item_selected: Res<ItemSelected>,
     mouse_position: Res<MyWorldCoords>,
@@ -449,16 +450,14 @@ fn dynamic_menu_actions( // rewrite pending
                 for (interaction, id) in &dyn_button {
                     match interaction {
                         Interaction::Pressed => {
-                            println!("presed option {:?}", id);
                             match id {
                                 DynamicButtonId::ButtonOne => {
                                     if let Some(mut crop) = crops.iter_mut().find(|c|c.1 == dyn_ui.world_entity) {
                                         crop.0.crop_type_selected = true;
-                                        println!(" changed to true ");
                                     };
                                 },
                                 DynamicButtonId::ButtonTwo => {},
-                                _ => {}           
+                                _ => {}         
                             }
                         },
                         _ => {  }

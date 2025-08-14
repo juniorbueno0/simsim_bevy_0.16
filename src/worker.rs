@@ -169,7 +169,7 @@ fn worker_life_cycle( // optimize this later
     for mut w in worker.iter_mut() {
         
         // assign
-        if let Some(mut crop) = crops.iter_mut().find(|c|!c.1.worker_assigned_bool && w.1.target_crop_pos == Option::None) {
+        if let Some(mut crop) = crops.iter_mut().find(|c|!c.1.worker_assigned_bool && w.1.target_crop_pos == Option::None && c.1.crop_type_selected) {
             crop.1.worker_assigned_bool = true;
             crop.1.worker_assigned_entity = w.2;
             w.1.target_crop_pos = Some(crop.0.translation);

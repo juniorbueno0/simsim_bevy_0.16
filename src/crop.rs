@@ -54,6 +54,8 @@ fn crop_growth_manager(
     }
 }
 
+// when harvested reset the assigned worker and crop_type_selected to false
+
 fn log_crop_data(
     input: Res<ButtonInput<KeyCode>>,
     crops: Query<&PreparedDirtData>
