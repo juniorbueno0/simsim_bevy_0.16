@@ -4,7 +4,7 @@ use crate::{buildings::{BuildingCoords, BuildingTuple, HasDynamicMenu}, crop::Pr
 
 const RGBINVSLOT: (f32,f32,f32) = (0.4,0.5,0.4);
 
-#[derive(Debug, Component)]
+#[derive(Debug, Component, PartialEq, Eq)]
 enum DynamicButtonId {
     ButtonOne,
     ButtonTwo,
@@ -250,11 +250,7 @@ fn ui_slot_interactions(
     button_interactions: Query<(&Interaction,&UiSlot,Entity),(With<UiItemSlotButton>, Changed<Interaction>)>
 ) {
     for (int, uis, ent) in &button_interactions {
-        if *int == Interaction::Pressed {
-            (selection.selected, selection.ui_entity) = (uis.item, ent);
-
-            println!("{:?}, {:?}", uis, ent);
-        }
+        if *int == Interaction::Pressed { (selection.selected, selection.ui_entity) = (uis.item, ent); }
     }
 }
 
@@ -288,9 +284,7 @@ fn ui_reset_slot(
 fn ui_slot_text(
     mut ui_slots: Query<(&UiSlot, &mut Text), (With<UiItemSlotButton>, Changed<UiSlot>)>,
 ) {
-    for (slot, mut text) in &mut ui_slots {
-        text.0 = slot.amount.to_string();
-    }
+    for (slot, mut text) in &mut ui_slots { text.0 = slot.amount.to_string(); }
 }
 
 fn ui_world_time_text(
@@ -384,6 +378,7 @@ fn dyn_ui_selection(
 fn display_dyn_ui_selected(
     mut cmm: Commands,
     mut dyn_ui: ResMut<DynamicUi>,
+    buttons: Query<&DynamicButtonId>
 ) {
     const INVENTORY_ROW_GAP: f32 = 10.0;
     const BUTTON_SLOT_SIZE: f32 = 75.0;
@@ -391,6 +386,10 @@ fn display_dyn_ui_selected(
     if dyn_ui.open {
         match dyn_ui.selected {
             ItemType::Dirt => {
+                let button = buttons.iter().next();
+
+                if button != Option::None { cmm.entity(dyn_ui.actual_ui_entity).despawn(); }
+
                 cmm.entity(dyn_ui.parent_ui_entity).with_children(|dyn_menu| {
                     dyn_ui.actual_ui_entity = dyn_menu.spawn((
                         Node {
