@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, render::camera::ScalingMode};
 
 struct CameraSettings {
     mov_speed: f32,
@@ -27,7 +27,19 @@ impl Plugin for MyCameraPlugin {
 }
 
 fn setup_camera(mut commands: Commands) {
-    commands.spawn((Camera2d { ..Default::default() }, MainCamera));
+    commands.spawn((
+        Camera2d { ..Default::default() }, 
+        MainCamera
+    ));
+
+        //     Projection::Orthographic(OrthographicProjection {
+        //     near: 100.,
+        //     far: 100.,
+        //     viewport_origin: Vec2::new(0.,0.),
+        //     scaling_mode: ScalingMode::WindowSize,
+        //     scale: 1.0,
+        //     area: Rect::new(0., 0., 1., 1.,),
+        // }),
 }
 
 fn move_camera(

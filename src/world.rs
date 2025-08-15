@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{buildings::HouseData, worker::WorkerData};
 
-const HOUR: f32 = 5.0;
+const HOUR: f32 = 2.0;
 
 #[derive(Debug, Component, PartialEq, Eq)]
 pub enum Meridiem {

@@ -186,12 +186,15 @@ fn worker_life_cycle( // optimize this later
 
             if is_work_time {
                 let dir = (w.0.translation - w.1.target_crop_pos.unwrap()).normalize_or_zero();
+
+                // if w.0.translation.x < (w.1.target_crop_pos.unwrap().x - 5.) || w.0.translation.x > (w.1.target_crop_pos.unwrap().x + 5.){
+                //     w.0.translation -= dir * w.1.worker_speed * time.delta_secs();
+                // }
+
                 w.0.translation -= dir * w.1.worker_speed * time.delta_secs();
-                if dir.x < 1.0 && dir.y < 1.0 {
-                    crop_entity.unwrap().1.growth_active = true;
-                }else { 
-                    crop_entity.unwrap().1.growth_active = false;
-                }
+
+                if dir.x < 1.0 && dir.y < 1.0 { crop_entity.unwrap().1.growth_active = true; continue; } // fix this later
+                crop_entity.unwrap().1.growth_active = false;
             } else {
                 crop_entity.unwrap().1.growth_active = false;
                 let dir = w.0.translation - Vec3::new(w.1.house_pos.0 as f32,w.1.house_pos.1 as f32,2.);

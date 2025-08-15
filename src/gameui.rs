@@ -240,28 +240,22 @@ fn build_custom_button(item: ItemType, amount: i32,rgb: (f32,f32,f32)) -> impl B
             text: Text("".to_string()),
             button: Button,
             id: UiItemSlotButton
-        }, 
+        },
         BackgroundColor(Color::srgb(rgb.0,rgb.1,rgb.2))
     )
 }
 
-fn ui_slot_interactions(
-    mut selection: ResMut<ItemSelected>,
-    button_interactions: Query<(&Interaction,&UiSlot,Entity),(With<UiItemSlotButton>, Changed<Interaction>)>
-) {
-    for (int, uis, ent) in &button_interactions {
-        if *int == Interaction::Pressed { (selection.selected, selection.ui_entity) = (uis.item, ent); }
+fn ui_slot_interactions(mut item_selected: ResMut<ItemSelected>,inventory_slots: Query<(&Interaction,&UiSlot,Entity),(With<UiItemSlotButton>, Changed<Interaction>)>) {
+    for (interaction, ui_slot, entity) in &inventory_slots {
+        if *interaction == Interaction::Pressed { (item_selected.selected, item_selected.ui_entity) = (ui_slot.item, entity); }
     }
 }
 
 // load items that are in the inventory
-fn ui_load_items(
-    mut slots: Query<(&mut UiSlot, Entity), With<UiItemSlotButton>>,
-    mut player_inventory: ResMut<PlayerInventory>
-) {
+fn ui_load_items(mut inventory_slots: Query<(&mut UiSlot, Entity), With<UiItemSlotButton>>,mut player_inventory: ResMut<PlayerInventory>) {
     let Some(item_not_assigned) = player_inventory.items.iter_mut().find(|i|!i.assigned) else { return; };
 
-    if let Some(mut slot) = slots.iter_mut().find(|s| s.0.item == ItemType::None) {
+    if let Some(mut slot) = inventory_slots.iter_mut().find(|s| s.0.item == ItemType::None) {
         slot.0.assigned = true;
         slot.0.item = item_not_assigned.item;
         slot.0.amount = item_not_assigned.total_amount;
@@ -272,51 +266,33 @@ fn ui_load_items(
 }
 
 // when inventory stack gets to 0 gets reset to Item::None 
-fn ui_reset_slot(
-    mut ui_slots: Query<&mut UiSlot, With<UiItemSlotButton>>,
-) {
-    if let Some(mut ui_button) = ui_slots.iter_mut().find(|uib|(uib.amount < 1) && (uib.item != ItemType::None)) {
+fn ui_reset_slot(mut inventory_slots: Query<&mut UiSlot, With<UiItemSlotButton>>) {
+    if let Some(mut ui_button) = inventory_slots.iter_mut().find(|uib|(uib.amount < 1) && (uib.item != ItemType::None)) {
         ui_button.item = ItemType::None;
         ui_button.assigned = false;
     };
 }
 
-fn ui_slot_text(
-    mut ui_slots: Query<(&UiSlot, &mut Text), (With<UiItemSlotButton>, Changed<UiSlot>)>,
-) {
-    for (slot, mut text) in &mut ui_slots { text.0 = slot.amount.to_string(); }
+fn ui_slot_text(mut inventory_slots: Query<(&UiSlot, &mut Text), (With<UiItemSlotButton>, Changed<UiSlot>)>) {
+    for (slot, mut text) in &mut inventory_slots { text.0 = slot.amount.to_string(); }
 }
 
-fn ui_world_time_text(
-    mut ui_time_text: Query<&mut Text2d, With<UiWorldTime>>,
-    world: Res<WorldSettings>
-) {
+fn ui_world_time_text(mut ui_time_text: Query<&mut Text2d, With<UiWorldTime>>,world_settings: Res<WorldSettings>) {
     if let Some(mut text) = ui_time_text.iter_mut().next() {
-        let world_time = format!("{:?}:00 {:?}", world.actual_hour as i32, world.meridiem);
-        
+        let world_time = format!("{:?}:00 {:?}", world_settings.actual_hour as i32, world_settings.meridiem);
         text.0 = world_time.to_string();
     };
 }
 
-fn highlight_slot_selected(
-    item_selected: Res<ItemSelected>,
-    mut ui_slots: Query<(&mut BackgroundColor, Entity),With<UiItemSlotButton>>
-) {
+fn highlight_slot_selected(item_selected: Res<ItemSelected>,mut ui_slots: Query<(&mut BackgroundColor, Entity),With<UiItemSlotButton>>) {
     for (mut bgc, entity) in &mut ui_slots {
-        if item_selected.ui_entity == entity {
-            bgc.0 = Color::srgb(0.7, 0.7, 0.7);
-        }else {
-            bgc.0 = Color::srgb(RGBINVSLOT.0,RGBINVSLOT.1,RGBINVSLOT.2);
-        }
+        if item_selected.ui_entity == entity { bgc.0 = Color::srgb(0.7, 0.7, 0.7); continue; }
+        bgc.0 = Color::srgb(RGBINVSLOT.0,RGBINVSLOT.1,RGBINVSLOT.2);
     }
 }
 
-fn reset_player_item_selected(
-    mut player_selected_item: ResMut<ItemSelected>,
-    ui_slots: Query<(&UiSlot,Entity),With<UiItemSlotButton>>
-) {
-    let entity = ui_slots.iter().find(|s|(s.1 == player_selected_item.ui_entity));
-
+fn reset_player_item_selected(mut player_selected_item: ResMut<ItemSelected>,inventory_slots: Query<(&UiSlot,Entity),With<UiItemSlotButton>>) {
+    let entity = inventory_slots.iter().find(|s|(s.1 == player_selected_item.ui_entity));
     match entity {
         Option::Some(_) => {},
         Option::None => { player_selected_item.selected = ItemType::None; player_selected_item.ui_entity = Entity::from_raw(0); }
@@ -331,20 +307,19 @@ fn reset_selected_item(
     mut player_selected_item: ResMut<ItemSelected>
 ) {
     if input_mouse.just_pressed(MouseButton::Right) || input_key.just_pressed(KeyCode::Escape) {
-        player_selected_item.selected = ItemType::None; player_selected_item.ui_entity = Entity::from_raw(0); 
+        player_selected_item.ui_entity = Entity::from_raw(0);
+        player_selected_item.selected = ItemType::None; 
         
         if dyn_ui.selected != ItemType::None {
-            dyn_ui.open = false; // no needed!
             dyn_ui.selected = ItemType::None;
             cmm.entity(dyn_ui.actual_ui_entity).despawn();
         }
     }
 }
 
-// DYNAMIC UI
+// [[ DYNAMIC UI ]]
 
 fn dyn_ui_selection(
-    mut cmm: Commands,
     mut dyn_ui: ResMut<DynamicUi>,
     item_selected: Res<ItemSelected>,
     mouse_position: Res<MyWorldCoords>,
@@ -369,24 +344,18 @@ fn dyn_ui_selection(
             if let Some(ent) = world_entities.iter().find(|we| we.0.translation.x == mouse_position.0.x && we.0.translation.y == mouse_position.0.y) {
                 dyn_ui.world_entity = ent.1;
             };
-
-            println!("{:?}", dyn_ui);
         }
     }
 }
 
-fn display_dyn_ui_selected(
-    mut cmm: Commands,
-    mut dyn_ui: ResMut<DynamicUi>,
-    buttons: Query<&DynamicButtonId>
-) {
+fn display_dyn_ui_selected(mut cmm: Commands,mut dyn_ui: ResMut<DynamicUi>,dyn_menu_buttons: Query<&DynamicButtonId>) {
     const INVENTORY_ROW_GAP: f32 = 10.0;
     const BUTTON_SLOT_SIZE: f32 = 75.0;
 
     if dyn_ui.open {
         match dyn_ui.selected {
             ItemType::Dirt => {
-                let button = buttons.iter().next();
+                let button = dyn_menu_buttons.iter().next();
 
                 if button != Option::None { cmm.entity(dyn_ui.actual_ui_entity).despawn(); }
 
@@ -404,7 +373,6 @@ fn display_dyn_ui_selected(
                         }, BackgroundColor(Color::srgb(0.3,0.3,0.3))
                     )).with_children(|slots| {
                         for i in 0..dyn_ui.button_count {
-                            println!("{:?}", i);
                             slots.spawn((
                                 Node {
                                     width: Val::Px(40.),
@@ -437,7 +405,7 @@ fn display_dyn_ui_selected(
 }
 
 // actions of the actual dynamic menu displayed
-fn dynamic_menu_actions( // rewrite pending
+fn dynamic_menu_actions(
     dyn_ui: Res<DynamicUi>,
     input: Res<ButtonInput<MouseButton>>,
     mut crops: Query<(&mut PreparedDirtData, Entity), With<PreparedDirtData>>,
@@ -446,24 +414,19 @@ fn dynamic_menu_actions( // rewrite pending
     if input.just_pressed(MouseButton::Left) {
         match dyn_ui.selected {
             ItemType::Dirt => {
-                for (interaction, id) in &dyn_button {
-                    match interaction {
-                        Interaction::Pressed => {
-                            match id {
-                                DynamicButtonId::ButtonOne => {
-                                    if let Some(mut crop) = crops.iter_mut().find(|c|c.1 == dyn_ui.world_entity) {
-                                        crop.0.crop_type_selected = true;
-                                    };
-                                },
-                                DynamicButtonId::ButtonTwo => {},
-                                _ => {}         
-                            }
+                if let Some(button_pressed) = dyn_button.iter().find(|b|*b.0 == Interaction::Pressed) {
+                    match button_pressed.1 {
+                        DynamicButtonId::ButtonOne => {
+                            if let Some(mut crop) = crops.iter_mut().find(|c|c.1 == dyn_ui.world_entity) {
+                                crop.0.crop_type_selected = true;
+                            };
                         },
-                        _ => {  }
+                        DynamicButtonId::ButtonTwo => {},
+                        _ => {}
                     }
-                }
+                };
             }
-            _ => {  }
+            _ => {}
         }
     }
 }
